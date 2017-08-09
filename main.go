@@ -304,6 +304,48 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 	return buffer
 }
 
+// ConsistentAlignmentPipeline aligns using global, local, and affine-local alignment
+// strategies to determine positions that have a consistent alignment pattern over
+// the three different strategies.
+func ConsistentAlignmentPipeline(inputPath, outputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, toUpper, toLower, saveTempAlns bool) {
+
+	const mafftCmd = "mafft"
+	const iterations = 1000
+
+	ginsiAln := StringToCharSequences(GinsiAlign(mafftCmd, inputPath, iterations))
+	linsiAln := StringToCharSequences(LinsiAlign(mafftCmd, inputPath, iterations))
+	einsiAln := StringToCharSequences(EinsiAlign(mafftCmd, inputPath, iterations))
+
+	if saveTempAlns == true {
+		ginsiAln.ToFasta("data/ginsi.aln")
+		linsiAln.ToFasta("data/linsi.aln")
+		einsiAln.ToFasta("data/einsi.aln")
+	}
+
+	consistentPos := ConsistentAlignmentPositions(
+		"-",
+		ginsiAln.UngappedPositionMatrix(gapChar),
+		linsiAln.UngappedPositionMatrix(gapChar),
+		einsiAln.UngappedPositionMatrix(gapChar),
+	)
+
+	if toUpper == true {
+		einsiAln.ToUpper()
+	} else if toLower == true {
+		einsiAln.ToLower()
+	}
+
+	b := BufferedMarkedAlignment(einsiAln, consistentPos, markerID, consistentMarker, inconsistentMarker)
+	f, err := os.Create(outputPath)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	b.WriteTo(f)
+	f.Sync()
+}
+
 func main() {
 	mafftCmd := "mafft"
 	testFile := "data/test.fa"
