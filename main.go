@@ -406,7 +406,6 @@ func main() {
 		buffer := ConsistentAlignmentPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 
 		fmt.Print(buffer.String())
-	} else {
 		// Batch mode
 		if doesExist, _ := exists(*isBatchPtr); doesExist == false {
 			os.Stderr.WriteString("Error: Specified directory containing FASTA files does not exist.\n")
