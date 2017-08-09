@@ -382,18 +382,18 @@ func main() {
 	if len(*isBatchPtr) < 1 {
 		// Single file mode
 		args := flag.Args()
-		switch {
-		case len(args) < 1:
+
+		if len(args) < 1 {
 			os.Stderr.WriteString("Error: Missing path to FASTA file.\n")
 			os.Exit(1)
-		case len(args) > 1:
-			os.Stderr.WriteString("Error: More than 1 positional argument passed.\n")
-			os.Exit(1)
-		case len(args) == 1:
+		} else if len(args) == 1 {
 			if doesExist, _ := exists(args[0]); doesExist == false {
 				os.Stderr.WriteString("Error: file does not exist.\n")
 				os.Exit(1)
 			}
+		} else {
+			os.Stderr.WriteString("Error: More than 1 positional argument passed.\n")
+			os.Exit(1)
 		}
 
 		switch {
@@ -406,7 +406,6 @@ func main() {
 		buffer := ConsistentAlignmentPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 
 		fmt.Print(buffer.String())
-	} else {
 		// Batch mode
 		if doesExist, _ := exists(*isBatchPtr); doesExist == false {
 			os.Stderr.WriteString("Error: Specified directory containing FASTA files does not exist.\n")
@@ -415,15 +414,14 @@ func main() {
 
 		// Check if outdir flag used
 		// Check if folder exists
-		switch {
-		case len(*outDirPtr) < 1:
+		if len(*outDirPtr) < 1 {
 			os.Stderr.WriteString("Error: Missing output directory.\nUse -outdir to specify an output directory where alignments will be saved.\n")
 			os.Exit(1)
-		case len(*outDirPtr) == 1:
-			if doesExist, _ := exists(*outDirPtr); doesExist == false {
-				os.Stderr.WriteString("Error: Specified output directory does not exist.\n")
-				os.Exit(1)
-			}
+		}
+
+		if doesExist, _ := exists(*outDirPtr); doesExist == false {
+			os.Stderr.WriteString("Error: Specified output directory does not exist.\n")
+			os.Exit(1)
 		}
 
 		// Read all fasta files in directory matching suffix
