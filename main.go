@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +19,9 @@ func ExecMafft(mafftCmd string, args []string) string {
 	if lookErr != nil {
 		panic(lookErr)
 	}
+
+	threads := runtime.NumCPU() - 1
+	args = append(args, []string{"--thread", strconv.Itoa(threads)}...)
 
 	cmd := exec.Command(absPath, args...)
 	stdout, err := cmd.Output()
