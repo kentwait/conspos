@@ -75,6 +75,11 @@ type Sequence interface {
 	UngappedPositionSlice(string) []int
 	ToUpper()
 	ToLower()
+	GetID() string
+	GetTitle() string
+	GetSequence() string
+	GetChar(int) string
+	SetSequence(string)
 }
 
 // CharSequence is a struct for nucleotide and single-letter protein sequences.
@@ -82,6 +87,26 @@ type CharSequence struct {
 	id    string
 	title string
 	seq   string
+}
+
+func (s *CharSequence) GetID() string {
+	return s.id
+}
+
+func (s *CharSequence) GetTitle() string {
+	return s.title
+}
+
+func (s *CharSequence) GetSequence() string {
+	return s.seq
+}
+
+func (s *CharSequence) GetChar(i int) string {
+	return string(s.seq[i])
+}
+
+func (s *CharSequence) SetSequence(seq string) {
+	s.seq = seq
 }
 
 // UngappedCoords returns the positions in the sequence where the character
@@ -128,7 +153,7 @@ func (s *CharSequence) ToLower() {
 }
 
 // SequenceAlignment is a slice of Sequence pointers.
-type SequenceAlignment []*CharSequence
+type SequenceAlignment []Sequence
 
 // UngappedCoords returns the row and column positions in the sequence alignment
 // where the character does not match the gap character.
@@ -159,14 +184,14 @@ func (a SequenceAlignment) UngappedPositionMatrix(gapChar string) (m [][]int) {
 // ToUpper changes the case of all sequences to all uppercase letters.
 func (a SequenceAlignment) ToUpper() {
 	for _, s := range a {
-		s.seq = strings.ToUpper(s.seq)
+		s.ToUpper()
 	}
 }
 
 // ToLower changes the case of of all sequences to all lowercase letters.
 func (a SequenceAlignment) ToLower() {
 	for _, s := range a {
-		s.seq = strings.ToLower(s.seq)
+		s.ToLower()
 	}
 }
 
@@ -220,12 +245,12 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 	var buffer bytes.Buffer
 	// Append each Sequence in SequenceAlignment
 	for _, s := range a {
-		if len(s.title) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.id, s.title))
+		if len(s.GetTitle()) > 0 {
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.GetID(), s.GetTitle()))
 		} else {
-			buffer.WriteString(fmt.Sprintf(">%s\n", s.id))
+			buffer.WriteString(fmt.Sprintf(">%s\n", s.GetID()))
 		}
-		buffer.WriteString(s.seq + "\n")
+		buffer.WriteString(s.GetSequence() + "\n")
 	}
 	return buffer
 }
@@ -293,12 +318,12 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 
 	// Append each Sequence in SequenceAlignment
 	for _, s := range template {
-		if len(s.title) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.id, s.title))
+		if len(s.GetTitle()) > 0 {
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.GetID(), s.GetTitle()))
 		} else {
-			buffer.WriteString(fmt.Sprintf(">%s\n", s.id))
+			buffer.WriteString(fmt.Sprintf(">%s\n", s.GetID()))
 		}
-		buffer.WriteString(s.seq + "\n")
+		buffer.WriteString(s.GetSequence() + "\n")
 	}
 	return buffer
 }
@@ -378,6 +403,11 @@ func main() {
 	outDirPtr := flag.String("outdir", "", "Output directory where alignments will be saved. Used in conjunction with -batch.")
 
 	flag.Parse()
+
+	if _, lookErr := exec.LookPath("mafft"); lookErr != nil {
+		os.Stderr.WriteString("Error: \"mafft\" is not found in $PATH. Please make sure that mafft is installed and is accessible through the command \"mafft\".\n")
+		os.Exit(1)
+	}
 
 	if len(*isBatchPtr) < 1 {
 		// Single file mode
