@@ -405,12 +405,16 @@ func main() {
 		fmt.Print(buffer.String())
 	} else {
 		// Batch mode
+		if doesExist, _ := exists(*isBatchPtr); doesExist == false {
+			os.Stderr.WriteString("Error: Specified directory containing FASTA files does not exist.\n")
+			os.Exit(1)
+		}
 
 		// Check if outdir flag used
 		// Check if folder exists
 		switch {
 		case len(*outDirPtr) < 1:
-			os.Stderr.WriteString("Error: Missing output directory.\n")
+			os.Stderr.WriteString("Error: Missing output directory.\nUse -outdir to specify an output directory where alignments will be saved.\n")
 			os.Exit(1)
 		case len(*outDirPtr) == 1:
 			if doesExist, _ := exists(*outDirPtr); doesExist == false {
