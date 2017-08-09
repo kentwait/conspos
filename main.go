@@ -116,7 +116,7 @@ type Sequence interface {
 	ToUpper()
 	ToLower()
 	ID() string
-	GetTitle() string
+	Title() string
 	GetSequence() string
 	GetChar(int) string
 	SetSequence(string)
@@ -133,7 +133,7 @@ func (s *CharSequence) ID() string {
 	return s.id
 }
 
-func (s *CharSequence) GetTitle() string {
+func (s *CharSequence) Title() string {
 	return s.title
 }
 
@@ -216,7 +216,7 @@ func (s *CodonSequence) ID() string {
 	return s.id
 }
 
-func (s *CodonSequence) GetTitle() string {
+func (s *CodonSequence) Title() string {
 	return s.title
 }
 
@@ -416,8 +416,8 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 	var buffer bytes.Buffer
 	// Append each Sequence in SequenceAlignment
 	for _, s := range a {
-		if len(s.GetTitle()) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.GetTitle()))
+		if len(s.Title()) > 0 {
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.Title()))
 		} else {
 			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
@@ -489,8 +489,8 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 
 	// Append each Sequence in SequenceAlignment
 	for _, s := range template {
-		if len(s.GetTitle()) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.GetTitle()))
+		if len(s.Title()) > 0 {
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.Title()))
 		} else {
 			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
