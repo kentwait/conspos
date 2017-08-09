@@ -117,7 +117,7 @@ type Sequence interface {
 	ToLower()
 	ID() string
 	Title() string
-	GetSequence() string
+	Sequence() string
 	GetChar(int) string
 	SetSequence(string)
 }
@@ -137,7 +137,7 @@ func (s *CharSequence) Title() string {
 	return s.title
 }
 
-func (s *CharSequence) GetSequence() string {
+func (s *CharSequence) Sequence() string {
 	return s.seq
 }
 
@@ -220,11 +220,11 @@ func (s *CodonSequence) Title() string {
 	return s.title
 }
 
-func (s *CodonSequence) GetSequence() string {
+func (s *CodonSequence) Sequence() string {
 	return strings.Join(s.seq, "")
 }
 
-func (s *CodonSequence) GetSequenceSlice() []string {
+func (s *CodonSequence) SequenceSlice() []string {
 	return s.seq
 }
 
@@ -421,7 +421,7 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 		} else {
 			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
-		buffer.WriteString(s.GetSequence() + "\n")
+		buffer.WriteString(s.Sequence() + "\n")
 	}
 	return buffer
 }
@@ -494,7 +494,7 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 		} else {
 			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
-		buffer.WriteString(s.GetSequence() + "\n")
+		buffer.WriteString(s.Sequence() + "\n")
 	}
 	return buffer
 }
