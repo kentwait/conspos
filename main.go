@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -119,6 +121,21 @@ var geneticCode = map[string]string{
 	"GGC": "G",
 	"GGA": "G",
 	"GGG": "G",
+	"---": "-",
+}
+
+func Translate(s string) *bytes.Buffer {
+	var buff bytes.Buffer
+	var trans string
+	for i := 0; i < len(s); i += 3 {
+		trans = geneticCode[string(s[i:i+3])]
+		if trans == "" {
+			buff.WriteString("X")
+		} else {
+			buff.WriteString(trans)
+		}
+	}
+	return &buff
 }
 
 // ExecMafft calls the MAFFT program with the given arguments
@@ -177,26 +194,74 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	return
 }
 
-func TranslateFasta(fastaPath string) string {
-	panic("Not implemented")
+func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) string {
+	absPath, lookErr := exec.LookPath(mafftCmd)
+	if lookErr != nil {
+		panic(lookErr)
+	}
+
+	args = append(args, "-")
+	cmd := exec.Command(absPath, args...)
+
+	os.Stdin.Write(buff.Bytes())
+	cmd.Stdin = os.Stdin
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(stdout))
+		return ""
+	}
+	return string(stdout)
 }
 
-// TranslateEinsiAlign calls MAFFT to align sequences by local alignment with
+func FastaToCodonSequence(path string) SequenceAlignment {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return StringToCodonSequences(string(b))
+}
+
+func AlignCodonsByProt(codonSeq, protAln SequenceAlignment) SequenceAlignment {
+	gapRune := []rune("-")[0]
+	var newAln SequenceAlignment
+	for i := range protAln {
+		newCodons := []string{}
+		newSeq := bytes.Buffer{}
+		for j, c := range protAln[i].Sequence() {
+			codons := reflect.ValueOf(codonSeq[i]).Elem().FieldByName("codons").String()
+			cStart := j * 3
+			cEnd := (j + 1) * 3
+			if c == gapRune {
+				newCodons = append(newCodons, "---")
+				newSeq.WriteString("---")
+			} else {
+				newCodons = append(newCodons, codons[cStart:cEnd])
+				newSeq.WriteString(codons[cStart:cEnd])
+			}
+		}
+		newAln = append(newAln, &CodonSequence{CharSequence{codonSeq[i].ID(), codonSeq[i].Title(), newSeq.String()}, protAln[i].Sequence(), newCodons})
+	}
+	return newAln
+}
+
+// EinsiCodonAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func TranslateEinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func EinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	args := []string{
 		"--quiet",
 		"--genafpair",
 		"--maxiterate",
 		strconv.Itoa(iterations),
-		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
+	s := FastaToCodonSequence(fastaPath)
+	buff := ProtSequencesToBuffer(s)
+	stdout = ExecMafftStdin(mafftCmd, buff, args)
+
 	return
 }
 
-// TranslateLinsiAlign calls MAFFT to align sequences by local alignment.
-func TranslateLinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+// LinsiCodonAlign calls MAFFT to align sequences by local alignment.
+func LinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	args := []string{
 		"--quiet",
 		"--localpair",
@@ -208,8 +273,8 @@ func TranslateLinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout str
 	return
 }
 
-// TranslateGinsiAlign calls MAFFT to align sequences by global alignment.
-func TranslateGinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+// GinsiCodonAlign calls MAFFT to align sequences by global alignment.
+func GinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	args := []string{
 		"--quiet",
 		"--globalpair",
@@ -319,10 +384,7 @@ func NewCodonSequence(id, title, seq string) *CodonSequence {
 	s := new(CodonSequence)
 	s.id = id
 	s.title = title
-	s.seq = seq
-	for i := 0; i < len(seq); i += 3 {
-		s.codons = append(s.codons, string(seq[i:i+3]))
-	}
+	s.SetSequence(seq)
 	return s
 }
 
@@ -342,8 +404,16 @@ func (s *CodonSequence) Codons() []string {
 	return s.codons
 }
 
+func (s *CodonSequence) Prot() string {
+	return s.prot
+}
+
 func (s *CodonSequence) Char(i int) string {
 	return string(s.seq[i])
+}
+
+func (s *CodonSequence) ProtChar(i int) string {
+	return string(s.prot[i])
 }
 
 func (s *CodonSequence) Codon(i int) string {
@@ -351,14 +421,18 @@ func (s *CodonSequence) Codon(i int) string {
 }
 
 func (s *CodonSequence) SetSequence(seq string) {
-	s.seq = seq
 	for i := 0; i < len(seq); i += 3 {
 		s.codons = append(s.codons, string(seq[i:i+3]))
 	}
+	s.prot = (*Translate(seq)).String()
 }
 
 func (s *CodonSequence) SetCodons(seq []string) {
 	s.codons = seq
+}
+
+func (s *CodonSequence) SetProt(seq string) {
+	s.prot = seq
 }
 
 // UngappedCoords returns the positions in the sequence where the character
@@ -551,6 +625,30 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 
 // SequencesToString converts sequences in the sequene alignment into a FASTA
 // formatted string.
+func ProtSequencesToString(a SequenceAlignment) string {
+	buffer := SequencesToBuffer(a)
+	return buffer.String()
+}
+
+// SequencesToBuffer converts sequences in the sequene alignment into a buffered
+// stream which can then be converted to bytes or a string.
+func ProtSequencesToBuffer(a SequenceAlignment) bytes.Buffer {
+	var buffer bytes.Buffer
+	// Append each Sequence in SequenceAlignment
+	for _, s := range a {
+		if len(s.Title()) > 0 {
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.Title()))
+		} else {
+			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
+		}
+		v := reflect.ValueOf(s).Elem().FieldByName("prot").String()
+		buffer.WriteString(v + "\n")
+	}
+	return buffer
+}
+
+// SequencesToString converts sequences in the sequene alignment into a FASTA
+// formatted string.
 func SequencesToString(a SequenceAlignment) string {
 	buffer := SequencesToBuffer(a)
 	return buffer.String()
@@ -660,9 +758,9 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	const mafftCmd = "mafft"
 
 	// Translate FASTA to protein then align
-	ginsiAln := StringToCodonSequences(TranslateGinsiAlign(mafftCmd, inputPath, iterations))
-	linsiAln := StringToCodonSequences(TranslateLinsiAlign(mafftCmd, inputPath, iterations))
-	einsiAln := StringToCodonSequences(TranslateEinsiAlign(mafftCmd, inputPath, iterations))
+	ginsiAln := StringToCodonSequences(GinsiCodonAlign(mafftCmd, inputPath, iterations))
+	linsiAln := StringToCodonSequences(LinsiCodonAlign(mafftCmd, inputPath, iterations))
+	einsiAln := StringToCodonSequences(EinsiCodonAlign(mafftCmd, inputPath, iterations))
 
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
