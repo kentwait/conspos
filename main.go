@@ -309,9 +309,9 @@ func ConsistentAlignmentPipeline(inputPath, gapChar, markerID, consistentMarker,
 	einsiAln := StringToCharSequences(EinsiAlign(mafftCmd, inputPath, iterations))
 
 	if saveTempAlns == true {
-		ginsiAln.ToFasta("data/ginsi.aln")
-		linsiAln.ToFasta("data/linsi.aln")
-		einsiAln.ToFasta("data/einsi.aln")
+		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
+		linsiAln.ToFasta(inputPath + ".linsi.aln")
+		einsiAln.ToFasta(inputPath + ".einsi.aln")
 	}
 
 	consistentPos := ConsistentAlignmentPositions(
@@ -356,8 +356,13 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
-	if len(args) > 1 {
-		os.Stderr.WriteString("Error: More than 1 positional argument passed.")
+	switch {
+	case len(args) < 1:
+		os.Stderr.WriteString("Error: Missing path to FASTA file.\n")
+		os.Exit(1)
+	case len(args) > 1:
+		os.Stderr.WriteString("Error: More than 1 positional argument passed.\n")
+		os.Exit(1)
 	}
 
 	switch {
