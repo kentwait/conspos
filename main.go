@@ -241,29 +241,32 @@ func SequencesToString(a SequenceAlignment) string {
 // that are considered consistent given by the alignment pattern per site
 // across all given alignments.
 func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
-	// Assumes all matrices have the same shape
-	m := len(matrices[0])
-	n := len(matrices[0][0])
+	// Transpose matrices and combine as string
+	patternSetMap := make(map[string]int)
+	var templatePattern []string
+	var patternBuffer bytes.Buffer
+	for k, matrix := range matrices {
+		for j := 0; j < len(matrix[0]); j++ {
+			for i := 0; i < len(matrix); i++ {
+				patternBuffer.WriteString(strconv.Itoa(matrix[i][j]) + ",")
+			}
 
-	pos := make([]bool, n)
-	for j := 0; j < n; j++ {
+			if k == 0 {
+				templatePattern = append(templatePattern, patternBuffer.String())
+			}
+			patternSetMap[patternBuffer.String()]++
+			patternBuffer.Reset()
+		}
+	}
+
+	pos := make([]bool, len(matrices[0][0]))
+	for j, pattern := range templatePattern {
 		// For the current column, compare the column pattern across the
 		// matrices. If a difference in corresponding values are detected,
 		// then the pattern is deemed inconsistent and the current column
 		// is therefore also inconsistent.
-		consistent := true
-
-	PatternLoop:
-		for k := 1; k < len(matrices); k++ {
-			for i := 0; i < m; i++ {
-				if matrices[0][i][j] != matrices[k][i][j] {
-					consistent = false
-					break PatternLoop
-				}
-			}
-		}
-
-		if consistent == true {
+		if patternSetMap[pattern] == len(matrices) {
+			// fmt.Println(pattern)
 			pos[j] = true
 		} else {
 			pos[j] = false
@@ -312,16 +315,16 @@ func ConsistentAlignmentPipeline(inputPath, gapChar, markerID, consistentMarker,
 	einsiAln := StringToCharSequences(EinsiAlign(mafftCmd, inputPath, iterations))
 
 	if saveTempAlns == true {
+		einsiAln.ToFasta(inputPath + ".einsi.aln")
 		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
 		linsiAln.ToFasta(inputPath + ".linsi.aln")
-		einsiAln.ToFasta(inputPath + ".einsi.aln")
 	}
 
 	consistentPos := ConsistentAlignmentPositions(
-		"-",
+		gapChar,
+		einsiAln.UngappedPositionMatrix(gapChar),
 		ginsiAln.UngappedPositionMatrix(gapChar),
 		linsiAln.UngappedPositionMatrix(gapChar),
-		einsiAln.UngappedPositionMatrix(gapChar),
 	)
 
 	if toUpper == true {
