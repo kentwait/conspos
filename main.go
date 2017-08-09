@@ -175,15 +175,7 @@ func (a SequenceAlignment) ToFastaString() string {
 
 // ToFasta saves the sequence alignment to a FASTA file.
 func (a SequenceAlignment) ToFasta(path string) {
-	b := SequencesToBuffer(a)
-	f, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	b.WriteTo(f)
-	f.Sync()
+	WriteBufferToFile(path, SequencesToBuffer(a))
 }
 
 // StringToCharSequences loads a string generated from properly formatted
@@ -307,7 +299,7 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 // ConsistentAlignmentPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
-func ConsistentAlignmentPipeline(inputPath, outputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, toUpper, toLower, saveTempAlns bool) {
+func ConsistentAlignmentPipeline(inputPath, outputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
 
 	const mafftCmd = "mafft"
 	const iterations = 1000
@@ -335,8 +327,12 @@ func ConsistentAlignmentPipeline(inputPath, outputPath, gapChar, markerID, consi
 		einsiAln.ToLower()
 	}
 
-	b := BufferedMarkedAlignment(einsiAln, consistentPos, markerID, consistentMarker, inconsistentMarker)
-	f, err := os.Create(outputPath)
+	return BufferedMarkedAlignment(einsiAln, consistentPos, markerID, consistentMarker, inconsistentMarker)
+}
+
+// WriteBufferToFile writes the contents of a buffer to file.
+func WriteBufferToFile(path string, b bytes.Buffer) {
+	f, err := os.Create(path)
 	if err != nil {
 		panic(err)
 	}
