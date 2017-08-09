@@ -405,7 +405,7 @@ func StringToCodonSequences(s string) (sequences SequenceAlignment) {
 		}
 	}
 	if seqBuffer.Len() > 0 {
-		sequences = append(sequences, &CharSequence{id, title, seqBuffer.String()})
+		sequences = append(sequences, NewCodonSequence(id, title, seqBuffer.String()))
 	}
 	return
 }
