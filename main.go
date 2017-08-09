@@ -115,7 +115,7 @@ type Sequence interface {
 	UngappedPositionSlice(string) []int
 	ToUpper()
 	ToLower()
-	GetID() string
+	ID() string
 	GetTitle() string
 	GetSequence() string
 	GetChar(int) string
@@ -129,7 +129,7 @@ type CharSequence struct {
 	seq   string
 }
 
-func (s *CharSequence) GetID() string {
+func (s *CharSequence) ID() string {
 	return s.id
 }
 
@@ -212,7 +212,7 @@ func NewCodonSequence(id, title, seq string) *CodonSequence {
 	return c
 }
 
-func (s *CodonSequence) GetID() string {
+func (s *CodonSequence) ID() string {
 	return s.id
 }
 
@@ -417,9 +417,9 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 	// Append each Sequence in SequenceAlignment
 	for _, s := range a {
 		if len(s.GetTitle()) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.GetID(), s.GetTitle()))
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.GetTitle()))
 		} else {
-			buffer.WriteString(fmt.Sprintf(">%s\n", s.GetID()))
+			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
 		buffer.WriteString(s.GetSequence() + "\n")
 	}
@@ -490,9 +490,9 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 	// Append each Sequence in SequenceAlignment
 	for _, s := range template {
 		if len(s.GetTitle()) > 0 {
-			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.GetID(), s.GetTitle()))
+			buffer.WriteString(fmt.Sprintf(">%s %s\n", s.ID(), s.GetTitle()))
 		} else {
-			buffer.WriteString(fmt.Sprintf(">%s\n", s.GetID()))
+			buffer.WriteString(fmt.Sprintf(">%s\n", s.ID()))
 		}
 		buffer.WriteString(s.GetSequence() + "\n")
 	}
