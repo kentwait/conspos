@@ -111,15 +111,15 @@ func TranslateGinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout str
 // Sequence is an interface for single character sequences stored as a string
 // and multi-character sequences stored as a slice.
 type Sequence interface {
-	UngappedCoords(string) []int
-	UngappedPositionSlice(string) []int
-	ToUpper()
-	ToLower()
 	ID() string
 	Title() string
 	Sequence() string
-	GetChar(int) string
+	Char(int) string
 	SetSequence(string)
+	ToUpper()
+	ToLower()
+	UngappedCoords(string) []int
+	UngappedPositionSlice(string) []int
 }
 
 // CharSequence is a struct for nucleotide and single-letter protein sequences.
@@ -141,7 +141,7 @@ func (s *CharSequence) Sequence() string {
 	return s.seq
 }
 
-func (s *CharSequence) GetChar(i int) string {
+func (s *CharSequence) Char(i int) string {
 	return string(s.seq[i])
 }
 
@@ -228,7 +228,7 @@ func (s *CodonSequence) SequenceSlice() []string {
 	return s.seq
 }
 
-func (s *CodonSequence) GetChar(i int) string {
+func (s *CodonSequence) Char(i int) string {
 	return string(s.seq[i])
 }
 
