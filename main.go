@@ -12,6 +12,115 @@ import (
 	"strings"
 )
 
+var bases = [4]string{"T", "C", "A", "G"}
+var codons = [64]string{
+	"TTT", "TTC", "TTA", "TTG",
+	"TCT", "TCC", "TCA", "TCG",
+	"TAT", "TAC", "TAA", "TAG",
+	"TGT", "TGC", "TGA", "TGG",
+	"CTT", "CTC", "CTA", "CTG",
+	"CCT", "CCC", "CCA", "CCG",
+	"CAT", "CAC", "CAA", "CAG",
+	"CGT", "CGC", "CGA", "CGG",
+	"ATT", "ATC", "ATA", "ATG",
+	"ACT", "ACC", "ACA", "ACG",
+	"AAT", "AAC", "AAA", "AAG",
+	"AGT", "AGC", "AGA", "AGG",
+	"GTT", "GTC", "GTA", "GTG",
+	"GCT", "GCC", "GCA", "GCG",
+	"GAT", "GAC", "GAA", "GAG",
+	"GGT", "GGC", "GGA", "GGG",
+}
+var stopCodons = [3]string{"TGA", "TAG", "TAA"}
+var aminoAcids = [20]string{
+	"A",
+	"R",
+	"N",
+	"D",
+	"C",
+	"Q",
+	"E",
+	"G",
+	"H",
+	"I",
+	"L",
+	"K",
+	"M",
+	"F",
+	"P",
+	"S",
+	"T",
+	"W",
+	"Y",
+	"V",
+}
+var geneticCode = map[string]string{
+	"TTT": "F",
+	"TTC": "F",
+	"TTA": "L",
+	"TTG": "L",
+	"TCT": "L",
+	"TCC": "L",
+	"TCA": "L",
+	"TCG": "L",
+	"TAT": "I",
+	"TAC": "I",
+	"TAA": "I",
+	"TAG": "M",
+	"TGT": "V",
+	"TGC": "V",
+	"TGA": "V",
+	"TGG": "V",
+	"CTT": "S",
+	"CTC": "S",
+	"CTA": "S",
+	"CTG": "S",
+	"CCT": "P",
+	"CCC": "P",
+	"CCA": "P",
+	"CCG": "P",
+	"CAT": "T",
+	"CAC": "T",
+	"CAA": "T",
+	"CAG": "T",
+	"CGT": "A",
+	"CGC": "A",
+	"CGA": "A",
+	"CGG": "A",
+	"ATT": "Y",
+	"ATC": "Y",
+	"ATA": "*",
+	"ATG": "*",
+	"ACT": "H",
+	"ACC": "H",
+	"ACA": "Q",
+	"ACG": "Q",
+	"AAT": "N",
+	"AAC": "N",
+	"AAA": "K",
+	"AAG": "K",
+	"AGT": "D",
+	"AGC": "D",
+	"AGA": "E",
+	"AGG": "E",
+	"GTT": "C",
+	"GTC": "C",
+	"GTA": "*",
+	"GTG": "W",
+	"GCT": "R",
+	"GCC": "R",
+	"GCA": "R",
+	"GCG": "R",
+	"GAT": "S",
+	"GAC": "S",
+	"GAA": "R",
+	"GAG": "R",
+	"GGT": "G",
+	"GGC": "G",
+	"GGA": "G",
+	"GGG": "G",
+}
+
 // ExecMafft calls the MAFFT program with the given arguments
 func ExecMafft(mafftCmd string, args []string) string {
 	absPath, lookErr := exec.LookPath(mafftCmd)
@@ -66,6 +175,10 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	}
 	stdout = ExecMafft(mafftCmd, args)
 	return
+}
+
+func TranslateFasta(fastaPath string) string {
+	panic("Not implemented")
 }
 
 // TranslateEinsiAlign calls MAFFT to align sequences by local alignment with
@@ -194,22 +307,23 @@ func (s *CharSequence) ToLower() {
 
 // CodonSequence is a struct for triplet nucleotide codon sequences
 type CodonSequence struct {
-	id    string
-	title string
-	seq   []string
+	CharSequence
+	prot   string
+	codons []string
 }
 
 func NewCodonSequence(id, title, seq string) *CodonSequence {
 	if len(seq)%3 == 0 {
 		panic("seq length not divisible by 3")
 	}
-	c := new(CodonSequence)
-	c.id = id
-	c.title = title
+	s := new(CodonSequence)
+	s.id = id
+	s.title = title
+	s.seq = seq
 	for i := 0; i < len(seq); i += 3 {
-		c.seq = append(c.seq, string(seq[i:i+3]))
+		s.codons = append(s.codons, string(seq[i:i+3]))
 	}
-	return c
+	return s
 }
 
 func (s *CodonSequence) ID() string {
@@ -221,25 +335,30 @@ func (s *CodonSequence) Title() string {
 }
 
 func (s *CodonSequence) Sequence() string {
-	return strings.Join(s.seq, "")
+	return s.seq
 }
 
-func (s *CodonSequence) SequenceSlice() []string {
-	return s.seq
+func (s *CodonSequence) Codons() []string {
+	return s.codons
 }
 
 func (s *CodonSequence) Char(i int) string {
 	return string(s.seq[i])
 }
 
+func (s *CodonSequence) Codon(i int) string {
+	return string(s.codons[i])
+}
+
 func (s *CodonSequence) SetSequence(seq string) {
+	s.seq = seq
 	for i := 0; i < len(seq); i += 3 {
-		s.seq = append(s.seq, string(seq[i:i+3]))
+		s.codons = append(s.codons, string(seq[i:i+3]))
 	}
 }
 
-func (s *CodonSequence) SetSequenceSlice(seq []string) {
-	s.seq = seq
+func (s *CodonSequence) SetCodons(seq []string) {
+	s.codons = seq
 }
 
 // UngappedCoords returns the positions in the sequence where the character
@@ -277,15 +396,19 @@ func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
 
 // ToUpper changes the case of the sequence to all uppercase letters.
 func (s *CodonSequence) ToUpper() {
+	s.seq = strings.ToUpper(s.seq)
+	s.prot = strings.ToUpper(s.prot)
 	for i := 0; i < len(s.seq); i++ {
-		s.seq[i] = strings.ToUpper(s.seq[i])
+		s.codons[i] = strings.ToUpper(s.codons[i])
 	}
 }
 
 // ToLower changes the case of the sequence to all lowercase letters.
 func (s *CodonSequence) ToLower() {
+	s.seq = strings.ToLower(s.seq)
+	s.prot = strings.ToLower(s.prot)
 	for i := 0; i < len(s.seq); i++ {
-		s.seq[i] = strings.ToLower(s.seq[i])
+		s.codons[i] = strings.ToLower(s.codons[i])
 	}
 }
 
