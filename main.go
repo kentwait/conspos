@@ -152,6 +152,80 @@ func (s *CharSequence) ToLower() {
 	s.seq = strings.ToLower(s.seq)
 }
 
+// CodonSequence is a struct for triplet nucleotide codon sequences
+type CodonSequence struct {
+	id    string
+	title string
+	seq   []string
+}
+
+func (s *CodonSequence) GetID() string {
+	return s.id
+}
+
+func (s *CodonSequence) GetTitle() string {
+	return s.title
+}
+
+func (s *CodonSequence) GetSequence() []string {
+	return s.seq
+}
+
+func (s *CodonSequence) GetChar(i int) string {
+	return string(s.seq[i])
+}
+
+func (s *CodonSequence) SetSequence(seq []string) {
+	s.seq = seq
+}
+
+// UngappedCoords returns the positions in the sequence where the character
+// does not match the gap character.
+func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
+	set := make(map[int]struct{})
+	for j := 0; j < len(s.seq); j++ {
+		if string(s.seq[j]) != gapChar {
+			set[j] = struct{}{}
+		}
+	}
+	for key := range set {
+		colCoords = append(colCoords, key)
+	}
+	sort.Ints(colCoords)
+	return
+}
+
+// UngappedPositionSlice returns a slice that counts only over characters
+// that does not match the gap character in the sequence.
+// If a character matches the gap character, -1 is inserted instead of the
+// ungapped count.
+func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
+	cnt := 0
+	for j := 0; j < len(s.seq); j++ {
+		if string(s.seq[j]) != gapChar {
+			arr = append(arr, cnt)
+			cnt++
+		} else {
+			arr = append(arr, -1)
+		}
+	}
+	return
+}
+
+// ToUpper changes the case of the sequence to all uppercase letters.
+func (s *CodonSequence) ToUpper() {
+	for i := 0; i < len(s.seq); i++ {
+		s.seq[i] = strings.ToUpper(s.seq[i])
+	}
+}
+
+// ToLower changes the case of the sequence to all lowercase letters.
+func (s *CodonSequence) ToLower() {
+	for i := 0; i < len(s.seq); i++ {
+		s.seq[i] = strings.ToLower(s.seq[i])
+	}
+}
+
 // SequenceAlignment is a slice of Sequence pointers.
 type SequenceAlignment []Sequence
 
