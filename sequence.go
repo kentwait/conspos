@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -118,8 +119,8 @@ type CodonSequence struct {
 // prot and codons field values are automatically computed from the provided
 // nucleotide sequence.
 func NewCodonSequence(id, title, seq string) *CodonSequence {
-	if len(seq)%3 == 0 {
-		panic("seq length not divisible by 3")
+	if len(seq)%3 != 0 {
+		panic(fmt.Sprintf("Given seq's length (%d) not divisible by 3", len(seq)))
 	}
 	s := new(CodonSequence)
 	s.id = id
@@ -210,10 +211,12 @@ func (s *CodonSequence) SetCodons(seq []string) {
 // UngappedCoords returns the positions in the sequence where the character
 // does not match the gap character.
 func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
+	if len(gapChar)%3 != 0 {
+		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
+	}
 	set := make(map[int]struct{})
-	gapByte := []byte(gapChar)[0]
-	for j := 0; j < len(s.seq); j++ {
-		if s.seq[j] != gapByte {
+	for j := 0; j < len(s.codons); j++ {
+		if s.codons[j] != gapChar {
 			set[j] = struct{}{}
 		}
 	}
@@ -229,10 +232,12 @@ func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // If a character matches the gap character, -1 is inserted instead of the
 // ungapped count.
 func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
+	if len(gapChar)%3 != 0 {
+		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
+	}
 	cnt := 0
-	gapByte := []byte(gapChar)[0]
-	for j := 0; j < len(s.seq); j++ {
-		if s.seq[j] != gapByte {
+	for j := 0; j < len(s.codons); j++ {
+		if s.codons[j] != gapChar {
 			arr = append(arr, cnt)
 			cnt++
 		} else {
