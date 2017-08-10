@@ -38,7 +38,7 @@ func ExecMafft(mafftCmd string, args []string) string {
 	}
 
 	threads := runtime.NumCPU() - 1
-	args = append(args, []string{"--thread", strconv.Itoa(threads)}...)
+	args = append([]string{"--thread", strconv.Itoa(threads)}, args...)
 
 	cmd := exec.Command(absPath, args...)
 	stdout, err := cmd.Output()
@@ -225,7 +225,6 @@ type SequenceAlignment []Sequence
 func (a SequenceAlignment) UngappedCoords(gapChar string) (rowCoords, colCoords []int) {
 	var currColCoords []int
 	for i, s := range a {
-		// s := reflect.ValueOf(sPtr)
 		currColCoords = s.UngappedCoords(gapChar)
 		for c := 0; c < len(currColCoords); c++ {
 			rowCoords = append(rowCoords, i)
@@ -414,7 +413,6 @@ func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
 		// then the pattern is deemed inconsistent and the current column
 		// is therefore also inconsistent.
 		if patternSetMap[pattern] == len(matrices) {
-			// fmt.Println(pattern)
 			pos[j] = true
 		} else {
 			pos[j] = false
@@ -451,7 +449,7 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 	return buffer
 }
 
-// ConsistentAlignmentPipeline aligns using global, local, and affine-local alignment
+// ConsistentAlnPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
 func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
