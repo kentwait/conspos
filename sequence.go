@@ -58,8 +58,9 @@ func (s *CharSequence) SetSequence(seq string) {
 // does not match the gap character.
 func (s *CharSequence) UngappedCoords(gapChar string) (colCoords []int) {
 	set := make(map[int]struct{})
+	gapByte := []byte(gapChar)[0]
 	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
+		if s.seq[j] != gapByte {
 			set[j] = struct{}{}
 		}
 	}
@@ -75,9 +76,10 @@ func (s *CharSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // If a character matches the gap character, -1 is inserted instead of the
 // ungapped count.
 func (s *CharSequence) UngappedPositionSlice(gapChar string) (arr []int) {
+	gapByte := []byte(gapChar)[0]
 	cnt := 0
 	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
+		if s.seq[j] != gapByte {
 			arr = append(arr, cnt)
 			cnt++
 		} else {
@@ -209,8 +211,9 @@ func (s *CodonSequence) SetCodons(seq []string) {
 // does not match the gap character.
 func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
 	set := make(map[int]struct{})
+	gapByte := []byte(gapChar)[0]
 	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
+		if s.seq[j] != gapByte {
 			set[j] = struct{}{}
 		}
 	}
@@ -227,8 +230,9 @@ func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // ungapped count.
 func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
 	cnt := 0
+	gapByte := []byte(gapChar)[0]
 	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
+		if s.seq[j] != gapByte {
 			arr = append(arr, cnt)
 			cnt++
 		} else {
