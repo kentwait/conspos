@@ -61,3 +61,21 @@ func TestSequenceAlignment_UngappedPositionMatrix(t *testing.T) {
 		}
 	}
 }
+
+func TestSequenceAlignment_ToFastaString(t *testing.T) {
+	seq1 := "TTT---TTCTTATTG"
+	seq2 := "TTT---TTCTTTTTG"
+	seq3 := "TTTTTCTTC---TTG"
+	a := SequenceAlignment{
+		&CharSequence{"test", "", seq1},
+		&CharSequence{"test", "", seq2},
+		&CharSequence{"test", "", seq3},
+	}
+	exp := ">test\nTTT---TTCTTATTG\n>test\nTTT---TTCTTTTTG\n>test\nTTTTTCTTC---TTG\n"
+
+	res := a.ToFastaString()
+
+	if res != exp {
+		t.Errorf("ToFastaString(): expected:\n%s\n actual:\n%s", exp, res)
+	}
+}
