@@ -233,14 +233,16 @@ func AlignCodonsToBuffer(c, p SequenceAlignment) bytes.Buffer {
 			newFasta.WriteString(fmt.Sprintf(">%s\n", c[i].ID()))
 		}
 
-		for j, char := range p[i].Sequence() {
-			codons := reflect.ValueOf(c[i]).Elem().FieldByName("codons").String()
-			cStart := j * 3
-			cEnd := (j + 1) * 3
+		ucnt := 0
+		for _, char := range p[i].Sequence() {
+			seq := reflect.ValueOf(c[i]).Elem().FieldByName("seq").String()
+			cStart := ucnt * 3
+			cEnd := (ucnt + 1) * 3
 			if char == gapRune {
 				newSeq.WriteString("---")
 			} else {
-				newSeq.WriteString(codons[cStart:cEnd])
+				newSeq.WriteString(seq[cStart:cEnd])
+				ucnt++
 			}
 		}
 		newSeq.WriteString("\n")
