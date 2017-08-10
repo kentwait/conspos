@@ -48,12 +48,131 @@ func TestCodonSequence_SetSequence_seq(t *testing.T) {
 
 func TestCodonSequence_SetSequence_prot(t *testing.T) {
 	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
-	seq := "TTTTTCTTATTGTCTTCCTCATCGTATTACTAATAGTGTTGCTGATGGCTTCTCCTACTGCCTCCCCCACCGCATCACCAACAGCGTCGCCGACGGATTATCATAATGACTACCACAACGAATAACAAAAAGAGTAGCAGAAGGGTTGTCGTAGTGGCTGCCGCAGCGGATGACGAAGAGGGTGGCGGAGGG---"
+	seq := "TTTTTCTTATTGTCTTCCTCATCGTATTACTAATAGTGTTGCTGATGGCTTCTCCTACTGCCTCCCCCACCGCATCACCAACAGCGTCGCCGACGGATTATCATAATGACTACCACAACGAATAACAAAAAGAGTAGCAGAAGGGTTGTCGTAGTGGCTGCCGCAGCGGATGACGAAGAGGGTGGCGGAGGG---NNN"
 	s.SetSequence(seq)
-	exp := "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG-"
+	exp := "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG-X"
 
 	if s.prot != exp {
 		t.Errorf("SetSequence(\"%s\"): expected %s, actual %s", seq, exp, s.prot)
+	}
+}
+
+func TestCodonSequence_SetSequence_codon(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	seq := "TTTTTCTTATTGTCTTCCTCATCGTATTACTAATAGTGTTGCTGATGGCTTCTCCTACTGCCTCCCCCACCGCATCACCAACAGCGTCGCCGACGGATTATCATAATGACTACCACAACGAATAACAAAAAGAGTAGCAGAAGGGTTGTCGTAGTGGCTGCCGCAGCGGATGACGAAGAGGGTGGCGGAGGG---NNN"
+	s.SetSequence(seq)
+	exp := []string{
+		"TTT", "TTC", "TTA", "TTG",
+		"TCT", "TCC", "TCA", "TCG",
+		"TAT", "TAC", "TAA", "TAG",
+		"TGT", "TGC", "TGA", "TGG",
+		"CTT", "CTC", "CTA", "CTG",
+		"CCT", "CCC", "CCA", "CCG",
+		"CAT", "CAC", "CAA", "CAG",
+		"CGT", "CGC", "CGA", "CGG",
+		"ATT", "ATC", "ATA", "ATG",
+		"ACT", "ACC", "ACA", "ACG",
+		"AAT", "AAC", "AAA", "AAG",
+		"AGT", "AGC", "AGA", "AGG",
+		"GTT", "GTC", "GTA", "GTG",
+		"GCT", "GCC", "GCA", "GCG",
+		"GAT", "GAC", "GAA", "GAG",
+		"GGT", "GGC", "GGA", "GGG",
+		"---", "NNN",
+	}
+
+	for i, expValue := range exp {
+		if s.codons[i] != expValue {
+			t.Errorf("SetSequence(\"%s\"): expected codon (%d) %s, actual %s", seq, i, expValue, s.codons[i])
+		}
+	}
+}
+
+func TestCodonSequence_SetCodons_seq(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	codons := []string{
+		"TTT", "TTC", "TTA", "TTG",
+		"TCT", "TCC", "TCA", "TCG",
+		"TAT", "TAC", "TAA", "TAG",
+		"TGT", "TGC", "TGA", "TGG",
+		"CTT", "CTC", "CTA", "CTG",
+		"CCT", "CCC", "CCA", "CCG",
+		"CAT", "CAC", "CAA", "CAG",
+		"CGT", "CGC", "CGA", "CGG",
+		"ATT", "ATC", "ATA", "ATG",
+		"ACT", "ACC", "ACA", "ACG",
+		"AAT", "AAC", "AAA", "AAG",
+		"AGT", "AGC", "AGA", "AGG",
+		"GTT", "GTC", "GTA", "GTG",
+		"GCT", "GCC", "GCA", "GCG",
+		"GAT", "GAC", "GAA", "GAG",
+		"GGT", "GGC", "GGA", "GGG",
+		"---", "NNN",
+	}
+	exp := "TTTTTCTTATTGTCTTCCTCATCGTATTACTAATAGTGTTGCTGATGGCTTCTCCTACTGCCTCCCCCACCGCATCACCAACAGCGTCGCCGACGGATTATCATAATGACTACCACAACGAATAACAAAAAGAGTAGCAGAAGGGTTGTCGTAGTGGCTGCCGCAGCGGATGACGAAGAGGGTGGCGGAGGG---NNN"
+	s.SetCodons(codons)
+
+	if s.seq != exp {
+		t.Errorf("SetCodons(\"%v\"): expected %s, actual %s", codons, exp, s.seq)
+	}
+}
+
+func TestCodonSequence_SetCodons_prot(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	codons := []string{
+		"TTT", "TTC", "TTA", "TTG",
+		"TCT", "TCC", "TCA", "TCG",
+		"TAT", "TAC", "TAA", "TAG",
+		"TGT", "TGC", "TGA", "TGG",
+		"CTT", "CTC", "CTA", "CTG",
+		"CCT", "CCC", "CCA", "CCG",
+		"CAT", "CAC", "CAA", "CAG",
+		"CGT", "CGC", "CGA", "CGG",
+		"ATT", "ATC", "ATA", "ATG",
+		"ACT", "ACC", "ACA", "ACG",
+		"AAT", "AAC", "AAA", "AAG",
+		"AGT", "AGC", "AGA", "AGG",
+		"GTT", "GTC", "GTA", "GTG",
+		"GCT", "GCC", "GCA", "GCG",
+		"GAT", "GAC", "GAA", "GAG",
+		"GGT", "GGC", "GGA", "GGG",
+		"---", "NNN",
+	}
+	s.SetCodons(codons)
+	exp := "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG-X"
+
+	if s.prot != exp {
+		t.Errorf("SetCodons(\"%v\"): expected %s, actual %s", codons, exp, s.prot)
+	}
+}
+
+func TestCodonSequence_SetCodons_codon(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	codons := []string{
+		"TTT", "TTC", "TTA", "TTG",
+		"TCT", "TCC", "TCA", "TCG",
+		"TAT", "TAC", "TAA", "TAG",
+		"TGT", "TGC", "TGA", "TGG",
+		"CTT", "CTC", "CTA", "CTG",
+		"CCT", "CCC", "CCA", "CCG",
+		"CAT", "CAC", "CAA", "CAG",
+		"CGT", "CGC", "CGA", "CGG",
+		"ATT", "ATC", "ATA", "ATG",
+		"ACT", "ACC", "ACA", "ACG",
+		"AAT", "AAC", "AAA", "AAG",
+		"AGT", "AGC", "AGA", "AGG",
+		"GTT", "GTC", "GTA", "GTG",
+		"GCT", "GCC", "GCA", "GCG",
+		"GAT", "GAC", "GAA", "GAG",
+		"GGT", "GGC", "GGA", "GGG",
+		"---", "NNN",
+	}
+	s.SetCodons(codons)
+
+	for i, expValue := range codons {
+		if s.codons[i] != expValue {
+			t.Errorf("SetCodons(\"%v\"): expected codon (%d) %s, actual %s", codons, i, expValue, s.codons[i])
+		}
 	}
 }
 
