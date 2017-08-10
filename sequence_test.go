@@ -35,3 +35,37 @@ func TestCharSequence_UngappedPositionSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestCodonSequence_UngappedCoords(t *testing.T) {
+	seq := "TTT---TTCTTATTG"
+	s := NewCodonSequence("test", "", seq)
+	gapChar := "---"
+	exp := []int{0, 2, 3, 4}
+
+	res := s.UngappedCoords(gapChar)
+
+	for i, expValue := range exp {
+		if expValue != res[i] {
+			t.Errorf("UngappedCoords(\"%s\"): expected (%d) %d, actual %d",
+				gapChar, i, expValue, res[i],
+			)
+		}
+	}
+}
+
+func TestCodonSequence_UngappedPositionSlice(t *testing.T) {
+	seq := "TTT---TTCTTATTG"
+	s := NewCodonSequence("test", "", seq)
+	gapChar := "---"
+	exp := []int{0, -1, 1, 2, 3}
+
+	res := s.UngappedPositionSlice(gapChar)
+
+	for i, expValue := range exp {
+		if expValue != res[i] {
+			t.Errorf("UngappedCoords(\"%s\"): expected (%d) %d, actual %d",
+				gapChar, i, expValue, res[i],
+			)
+		}
+	}
+}
