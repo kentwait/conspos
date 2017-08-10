@@ -46,6 +46,17 @@ func TestCodonSequence_SetSequence_seq(t *testing.T) {
 	}
 }
 
+func TestCodonSequence_SetSequence_prot(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	seq := "TTTTTCTTATTGTCTTCCTCATCGTATTACTAATAGTGTTGCTGATGGCTTCTCCTACTGCCTCCCCCACCGCATCACCAACAGCGTCGCCGACGGATTATCATAATGACTACCACAACGAATAACAAAAAGAGTAGCAGAAGGGTTGTCGTAGTGGCTGCCGCAGCGGATGACGAAGAGGGTGGCGGAGGG---"
+	s.SetSequence(seq)
+	exp := "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG-"
+
+	if s.prot != exp {
+		t.Errorf("SetSequence(\"%s\"): expected %s, actual %s", seq, exp, s.prot)
+	}
+}
+
 func TestCodonSequence_UngappedCoords(t *testing.T) {
 	seq := "TTT---TTCTTATTG"
 	s := NewCodonSequence("test", "", seq)
