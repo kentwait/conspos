@@ -36,6 +36,16 @@ func TestCharSequence_UngappedPositionSlice(t *testing.T) {
 	}
 }
 
+func TestCodonSequence_SetSequence_seq(t *testing.T) {
+	s := CodonSequence{CharSequence{"test", "", ""}, "", []string{}}
+	seq := "TTT---TTCTTATTG"
+	s.SetSequence(seq)
+
+	if s.seq != seq {
+		t.Errorf("SetSequence(\"%s\"): expected %s, actual %s", seq, seq, s.seq)
+	}
+}
+
 func TestCodonSequence_UngappedCoords(t *testing.T) {
 	seq := "TTT---TTCTTATTG"
 	s := NewCodonSequence("test", "", seq)
