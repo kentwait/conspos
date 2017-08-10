@@ -191,6 +191,10 @@ func (s *CodonSequence) Codon(i int) string {
 // nucleotide sequence into triplets and translating each codon into its
 // corresponding amino acid using the standard genetic code respectively.
 func (s *CodonSequence) SetSequence(seq string) {
+	if len(seq)%3 != 0 {
+		panic(fmt.Sprintf("Length of given seq \"%s\" is not divisible by 3", seq))
+	}
+	s.seq = seq
 	for i := 0; i < len(seq); i += 3 {
 		s.codons = append(s.codons, string(seq[i:i+3]))
 	}
