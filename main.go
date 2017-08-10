@@ -221,43 +221,65 @@ func FastaToCodonSequence(path string) SequenceAlignment {
 	return StringToCodonSequences(string(b))
 }
 
-func AlignCodonsByProt(codonSeq, protAln SequenceAlignment) SequenceAlignment {
+func AlignCodonsToBuffer(c, p SequenceAlignment) bytes.Buffer {
 	gapRune := []rune("-")[0]
-	var newAln SequenceAlignment
-	for i := range protAln {
-		newCodons := []string{}
+	var newFasta bytes.Buffer
+	for i := range p {
 		newSeq := bytes.Buffer{}
-		for j, c := range protAln[i].Sequence() {
-			codons := reflect.ValueOf(codonSeq[i]).Elem().FieldByName("codons").String()
+
+		if len(c[i].Title()) > 0 {
+			newFasta.WriteString(fmt.Sprintf(">%s %s\n", c[i].ID(), p[i].Title()))
+		} else {
+			newFasta.WriteString(fmt.Sprintf(">%s\n", c[i].ID()))
+		}
+
+		for j, char := range p[i].Sequence() {
+			codons := reflect.ValueOf(c[i]).Elem().FieldByName("codons").String()
 			cStart := j * 3
 			cEnd := (j + 1) * 3
-			if c == gapRune {
-				newCodons = append(newCodons, "---")
+			if char == gapRune {
 				newSeq.WriteString("---")
 			} else {
-				newCodons = append(newCodons, codons[cStart:cEnd])
 				newSeq.WriteString(codons[cStart:cEnd])
 			}
 		}
-		newAln = append(newAln, &CodonSequence{CharSequence{codonSeq[i].ID(), codonSeq[i].Title(), newSeq.String()}, protAln[i].Sequence(), newCodons})
+		newSeq.WriteString("\n")
+		newFasta.Write(newSeq.Bytes())
+
+		newSeq.Reset()
 	}
-	return newAln
+	return newFasta
+}
+
+func AlignCodonsToString(c, p SequenceAlignment) string {
+	b := AlignCodonsToBuffer(c, p)
+	return b.String()
 }
 
 // EinsiCodonAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func EinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func EinsiCodonAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
 		"--quiet",
 		"--genafpair",
 		"--maxiterate",
 		strconv.Itoa(iterations),
 	}
-	s := FastaToCodonSequence(fastaPath)
-	buff := ProtSequencesToBuffer(s)
-	stdout = ExecMafftStdin(mafftCmd, buff, args)
+	// Create CodonSequences to generate translated protein sequence from nucleotide sequence
+	c := FastaToCodonSequence(fastaPath)
 
-	return
+	// Read protein sequences from SequenceAlignment of CodonSequences and create a Fasta string in buffer
+	buff := ProtSequencesToBuffer(c)
+	// Pass Fasta string as stdin to mafft then capture stdout string
+	stdout := ExecMafftStdin(mafftCmd, buff, args)
+
+	// Create CharSequences from protein alignment
+	p := StringToCharSequences(stdout)
+
+	// Use protein alignment to offset codons and match alignment. Output as Fasta string
+	newStdout := AlignCodonsToString(c, p)
+
+	return newStdout
 }
 
 // LinsiCodonAlign calls MAFFT to align sequences by local alignment.
