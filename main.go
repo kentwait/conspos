@@ -814,7 +814,7 @@ func main() {
 	toLower := false
 
 	// isCodonPtr := flag.Bool("codon", 0, "Create a codon-based alignment.")
-	maxIterPtr := flag.Int("maxiterate", 0, "Maximum number of iterative refinement that MAFFT will perform.")
+	maxIterPtr := flag.Int("maxiterate", 1, "Maximum number of iterative refinement that MAFFT will perform.")
 	gapCharPtr := flag.String("gapchar", "-", "Character in the alignment used to represent a gap.")
 	markerIDPtr := flag.String("marker_id", "marker", "Name of marker sequence.")
 	cMarkerPtr := flag.String("consistent_marker", "C", "Character to indicate a site is consistent across all alignment strategies.")
