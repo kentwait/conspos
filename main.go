@@ -9,121 +9,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"sort"
+	"runtime"
 	"strconv"
 	"strings"
 )
 
-var bases = [4]string{"T", "C", "A", "G"}
-var codons = [64]string{
-	"TTT", "TTC", "TTA", "TTG",
-	"TCT", "TCC", "TCA", "TCG",
-	"TAT", "TAC", "TAA", "TAG",
-	"TGT", "TGC", "TGA", "TGG",
-	"CTT", "CTC", "CTA", "CTG",
-	"CCT", "CCC", "CCA", "CCG",
-	"CAT", "CAC", "CAA", "CAG",
-	"CGT", "CGC", "CGA", "CGG",
-	"ATT", "ATC", "ATA", "ATG",
-	"ACT", "ACC", "ACA", "ACG",
-	"AAT", "AAC", "AAA", "AAG",
-	"AGT", "AGC", "AGA", "AGG",
-	"GTT", "GTC", "GTA", "GTG",
-	"GCT", "GCC", "GCA", "GCG",
-	"GAT", "GAC", "GAA", "GAG",
-	"GGT", "GGC", "GGA", "GGG",
-}
-var stopCodons = [3]string{"TGA", "TAG", "TAA"}
-var aminoAcids = [20]string{
-	"A",
-	"R",
-	"N",
-	"D",
-	"C",
-	"Q",
-	"E",
-	"G",
-	"H",
-	"I",
-	"L",
-	"K",
-	"M",
-	"F",
-	"P",
-	"S",
-	"T",
-	"W",
-	"Y",
-	"V",
-}
-var geneticCode = map[string]string{
-	"TTT": "F",
-	"TTC": "F",
-	"TTA": "L",
-	"TTG": "L",
-	"TCT": "L",
-	"TCC": "L",
-	"TCA": "L",
-	"TCG": "L",
-	"TAT": "I",
-	"TAC": "I",
-	"TAA": "I",
-	"TAG": "M",
-	"TGT": "V",
-	"TGC": "V",
-	"TGA": "V",
-	"TGG": "V",
-	"CTT": "S",
-	"CTC": "S",
-	"CTA": "S",
-	"CTG": "S",
-	"CCT": "P",
-	"CCC": "P",
-	"CCA": "P",
-	"CCG": "P",
-	"CAT": "T",
-	"CAC": "T",
-	"CAA": "T",
-	"CAG": "T",
-	"CGT": "A",
-	"CGC": "A",
-	"CGA": "A",
-	"CGG": "A",
-	"ATT": "Y",
-	"ATC": "Y",
-	"ATA": "*",
-	"ATG": "*",
-	"ACT": "H",
-	"ACC": "H",
-	"ACA": "Q",
-	"ACG": "Q",
-	"AAT": "N",
-	"AAC": "N",
-	"AAA": "K",
-	"AAG": "K",
-	"AGT": "D",
-	"AGC": "D",
-	"AGA": "E",
-	"AGG": "E",
-	"GTT": "C",
-	"GTC": "C",
-	"GTA": "*",
-	"GTG": "W",
-	"GCT": "R",
-	"GCC": "R",
-	"GCA": "R",
-	"GCG": "R",
-	"GAT": "S",
-	"GAC": "S",
-	"GAA": "R",
-	"GAG": "R",
-	"GGT": "G",
-	"GGC": "G",
-	"GGA": "G",
-	"GGG": "G",
-	"---": "-",
-}
-
+// Translate naively converts nucleotides into amino acids without regard
+// for the reading frame.
 func Translate(s string) *bytes.Buffer {
 	var buff bytes.Buffer
 	var trans string
@@ -138,12 +30,15 @@ func Translate(s string) *bytes.Buffer {
 	return &buff
 }
 
-// ExecMafft calls the MAFFT program with the given arguments
+// ExecMafft calls the MAFFT program with the given arguments.
 func ExecMafft(mafftCmd string, args []string) string {
 	absPath, lookErr := exec.LookPath(mafftCmd)
 	if lookErr != nil {
 		panic(lookErr)
 	}
+
+	threads := runtime.NumCPU() - 1
+	args = append([]string{"--thread", strconv.Itoa(threads)}, args...)
 
 	cmd := exec.Command(absPath, args...)
 	stdout, err := cmd.Output()
@@ -194,6 +89,8 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
 	return
 }
 
+// ExecMafftStdin calls the MAFFT program with the given arguments and using
+// standard input as input.
 func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) string {
 	absPath, lookErr := exec.LookPath(mafftCmd)
 	if lookErr != nil {
@@ -213,6 +110,8 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) string {
 	return string(stdout)
 }
 
+// FastaToCodonSequence reads a FASTA file and converts it into a sequence
+// alignment of codon sequences.
 func FastaToCodonSequence(path string) SequenceAlignment {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -221,6 +120,10 @@ func FastaToCodonSequence(path string) SequenceAlignment {
 	return StringToCodonSequences(string(b))
 }
 
+// AlignCodonsToBuffer takes an unaligned set of codon sequences and an
+// aligned set of protein sequences to create a new sequence alignment
+// by using the aligned protein sequences as a guide. Outputs a buffer
+// containing a the new codon alignment as a FASTA-formatted string.
 func AlignCodonsToBuffer(c, p SequenceAlignment) bytes.Buffer {
 	gapRune := []rune("-")[0]
 	var newFasta bytes.Buffer
@@ -253,6 +156,10 @@ func AlignCodonsToBuffer(c, p SequenceAlignment) bytes.Buffer {
 	return newFasta
 }
 
+// AlignCodonsToString takes an unaligned set of codon sequences and an
+// aligned set of protein sequences to create a new sequence alignment
+// by using the aligned protein sequences as a guide. Outputs a FASTA-
+// formatted string.
 func AlignCodonsToString(c, p SequenceAlignment) string {
 	b := AlignCodonsToBuffer(c, p)
 	return b.String()
@@ -308,259 +215,6 @@ func GinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string)
 	}
 	stdout = ExecMafft(mafftCmd, args)
 	return
-}
-
-// Sequence is an interface for single character sequences stored as a string
-// and multi-character sequences stored as a slice.
-type Sequence interface {
-	ID() string
-	Title() string
-	Sequence() string
-	Char(int) string
-	SetSequence(string)
-	ToUpper()
-	ToLower()
-	UngappedCoords(string) []int
-	UngappedPositionSlice(string) []int
-}
-
-// CharSequence is a struct for nucleotide and single-letter protein sequences.
-type CharSequence struct {
-	id    string
-	title string
-	seq   string
-}
-
-func (s *CharSequence) ID() string {
-	return s.id
-}
-
-func (s *CharSequence) Title() string {
-	return s.title
-}
-
-func (s *CharSequence) Sequence() string {
-	return s.seq
-}
-
-func (s *CharSequence) Char(i int) string {
-	return string(s.seq[i])
-}
-
-func (s *CharSequence) SetSequence(seq string) {
-	s.seq = seq
-}
-
-// UngappedCoords returns the positions in the sequence where the character
-// does not match the gap character.
-func (s *CharSequence) UngappedCoords(gapChar string) (colCoords []int) {
-	set := make(map[int]struct{})
-	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
-			set[j] = struct{}{}
-		}
-	}
-	for key := range set {
-		colCoords = append(colCoords, key)
-	}
-	sort.Ints(colCoords)
-	return
-}
-
-// UngappedPositionSlice returns a slice that counts only over characters
-// that does not match the gap character in the sequence.
-// If a character matches the gap character, -1 is inserted instead of the
-// ungapped count.
-func (s *CharSequence) UngappedPositionSlice(gapChar string) (arr []int) {
-	cnt := 0
-	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
-			arr = append(arr, cnt)
-			cnt++
-		} else {
-			arr = append(arr, -1)
-		}
-	}
-	return
-}
-
-// ToUpper changes the case of the sequence to all uppercase letters.
-func (s *CharSequence) ToUpper() {
-	s.seq = strings.ToUpper(s.seq)
-}
-
-// ToLower changes the case of the sequence to all lowercase letters.
-func (s *CharSequence) ToLower() {
-	s.seq = strings.ToLower(s.seq)
-}
-
-// CodonSequence is a struct for triplet nucleotide codon sequences
-type CodonSequence struct {
-	CharSequence
-	prot   string
-	codons []string
-}
-
-func NewCodonSequence(id, title, seq string) *CodonSequence {
-	if len(seq)%3 == 0 {
-		panic("seq length not divisible by 3")
-	}
-	s := new(CodonSequence)
-	s.id = id
-	s.title = title
-	s.SetSequence(seq)
-	return s
-}
-
-func (s *CodonSequence) ID() string {
-	return s.id
-}
-
-func (s *CodonSequence) Title() string {
-	return s.title
-}
-
-func (s *CodonSequence) Sequence() string {
-	return s.seq
-}
-
-func (s *CodonSequence) Codons() []string {
-	return s.codons
-}
-
-func (s *CodonSequence) Prot() string {
-	return s.prot
-}
-
-func (s *CodonSequence) Char(i int) string {
-	return string(s.seq[i])
-}
-
-func (s *CodonSequence) ProtChar(i int) string {
-	return string(s.prot[i])
-}
-
-func (s *CodonSequence) Codon(i int) string {
-	return string(s.codons[i])
-}
-
-func (s *CodonSequence) SetSequence(seq string) {
-	for i := 0; i < len(seq); i += 3 {
-		s.codons = append(s.codons, string(seq[i:i+3]))
-	}
-	s.prot = (*Translate(seq)).String()
-}
-
-func (s *CodonSequence) SetCodons(seq []string) {
-	s.codons = seq
-}
-
-func (s *CodonSequence) SetProt(seq string) {
-	s.prot = seq
-}
-
-// UngappedCoords returns the positions in the sequence where the character
-// does not match the gap character.
-func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
-	set := make(map[int]struct{})
-	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
-			set[j] = struct{}{}
-		}
-	}
-	for key := range set {
-		colCoords = append(colCoords, key)
-	}
-	sort.Ints(colCoords)
-	return
-}
-
-// UngappedPositionSlice returns a slice that counts only over characters
-// that does not match the gap character in the sequence.
-// If a character matches the gap character, -1 is inserted instead of the
-// ungapped count.
-func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
-	cnt := 0
-	for j := 0; j < len(s.seq); j++ {
-		if string(s.seq[j]) != gapChar {
-			arr = append(arr, cnt)
-			cnt++
-		} else {
-			arr = append(arr, -1)
-		}
-	}
-	return
-}
-
-// ToUpper changes the case of the sequence to all uppercase letters.
-func (s *CodonSequence) ToUpper() {
-	s.seq = strings.ToUpper(s.seq)
-	s.prot = strings.ToUpper(s.prot)
-	for i := 0; i < len(s.seq); i++ {
-		s.codons[i] = strings.ToUpper(s.codons[i])
-	}
-}
-
-// ToLower changes the case of the sequence to all lowercase letters.
-func (s *CodonSequence) ToLower() {
-	s.seq = strings.ToLower(s.seq)
-	s.prot = strings.ToLower(s.prot)
-	for i := 0; i < len(s.seq); i++ {
-		s.codons[i] = strings.ToLower(s.codons[i])
-	}
-}
-
-// SequenceAlignment is a slice of Sequence pointers.
-type SequenceAlignment []Sequence
-
-// UngappedCoords returns the row and column positions in the sequence alignment
-// where the character does not match the gap character.
-func (a SequenceAlignment) UngappedCoords(gapChar string) (rowCoords, colCoords []int) {
-	var currColCoords []int
-	for i, s := range a {
-		// s := reflect.ValueOf(sPtr)
-		currColCoords = s.UngappedCoords(gapChar)
-		for c := 0; c < len(currColCoords); c++ {
-			rowCoords = append(rowCoords, i)
-		}
-		colCoords = append(colCoords, currColCoords...)
-	}
-	return
-}
-
-// UngappedPositionMatrix returns a matrix that counts only over characters
-// that does not match the gap character for each sequence in the alignment.
-// If a character in a sequence matches the gap character, -1 is inserted
-// instead of the ungapped count.
-func (a SequenceAlignment) UngappedPositionMatrix(gapChar string) (m [][]int) {
-	for _, s := range a {
-		m = append(m, s.UngappedPositionSlice(gapChar))
-	}
-	return
-}
-
-// ToUpper changes the case of all sequences to all uppercase letters.
-func (a SequenceAlignment) ToUpper() {
-	for _, s := range a {
-		s.ToUpper()
-	}
-}
-
-// ToLower changes the case of of all sequences to all lowercase letters.
-func (a SequenceAlignment) ToLower() {
-	for _, s := range a {
-		s.ToLower()
-	}
-}
-
-// ToFastaString returns the FASTA-formatted string of the sequence alignment.
-func (a SequenceAlignment) ToFastaString() string {
-	return SequencesToString(a)
-}
-
-// ToFasta saves the sequence alignment to a FASTA file.
-func (a SequenceAlignment) ToFasta(path string) {
-	WriteBufferToFile(path, SequencesToBuffer(a))
 }
 
 // StringToCharSequences loads a string generated from properly formatted
@@ -707,7 +361,6 @@ func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
 		// then the pattern is deemed inconsistent and the current column
 		// is therefore also inconsistent.
 		if patternSetMap[pattern] == len(matrices) {
-			// fmt.Println(pattern)
 			pos[j] = true
 		} else {
 			pos[j] = false
@@ -744,7 +397,7 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 	return buffer
 }
 
-// ConsistentAlignmentPipeline aligns using global, local, and affine-local alignment
+// ConsistentAlnPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
 func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
