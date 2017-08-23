@@ -39,21 +39,29 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 
 	threads := runtime.NumCPU() - 1
 	args = append([]string{"--thread", strconv.Itoa(threads)}, args...)
-	os.Stderr.WriteString(strings.Join(args, " ") + "\n")
+
+	// Output MAFFT call
+	os.Stderr.WriteString(absPath + " " + strings.Join(args, " ") + "\n")
 
 	cmd := exec.Command(absPath, args...)
 
 	err := cmd.Run()
 	if err != nil {
-		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+		MafftError(err)
+		os.Exit(1)
 	}
 
 	stdout, err := cmd.Output()
 	if err != nil {
-		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+		panic(err)
 	}
 
 	return string(stdout), nil
+}
+
+// MafftError writes to stderr that something has gone wrong with MAFFT.
+func MafftError(err error) {
+	os.Stderr.WriteString("Error: MAFFT did not exit properly (" + fmt.Sprint(err) + ")\nCheck if input sequences are valid.\n")
 }
 
 // EinsiAlign calls MAFFT to align sequences by local alignment with
@@ -124,12 +132,13 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 
 	err := cmd.Run()
 	if err != nil {
-		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+		MafftError(err)
+		os.Exit(1)
 	}
 
 	stdout, err := cmd.Output()
 	if err != nil {
-		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+		panic(err)
 	}
 	return string(stdout), nil
 }
@@ -423,6 +432,13 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 	return buffer
 }
 
+// EmptyAlnError writes to stderr that the resulting alignment from MAFFT is
+// empty.
+func EmptyAlnError(alnType, inputPath string) {
+	msg := fmt.Sprintf("Error: %s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.\n", alnType, inputPath)
+	os.Stderr.WriteString(msg)
+}
+
 // ConsistentAlnPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
@@ -436,16 +452,16 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 
 	// Check if string alignment is not empty
 	if len(ginsiString) < 1 {
-		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "G-INSI", inputPath)
-		panic(msg)
+		EmptyAlnError("G-INSI", inputPath)
+		os.Exit(1)
 	}
 	if len(linsiString) < 1 {
-		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "L-INSI", inputPath)
-		panic(msg)
+		EmptyAlnError("L-INSI", inputPath)
+		os.Exit(1)
 	}
 	if len(einsiString) < 1 {
-		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "E-INSI", inputPath)
-		panic(msg)
+		EmptyAlnError("E-INSI", inputPath)
+		os.Exit(1)
 	}
 
 	ginsiAln := StringToCharSequences(ginsiString)
@@ -478,21 +494,28 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 
 	const mafftCmd = "mafft"
 
-	// Translate FASTA to protein then align
-	ginsiAln := StringToCodonSequences(GinsiCodonAlign(mafftCmd, inputPath, iterations))
-	linsiAln := StringToCodonSequences(LinsiCodonAlign(mafftCmd, inputPath, iterations))
-	einsiAln := StringToCodonSequences(EinsiCodonAlign(mafftCmd, inputPath, iterations))
+	ginsiString := GinsiCodonAlign(mafftCmd, inputPath, iterations)
+	linsiString := LinsiCodonAlign(mafftCmd, inputPath, iterations)
+	einsiString := EinsiCodonAlign(mafftCmd, inputPath, iterations)
 
-	// Check if buffer alignment is not empty
-	if len(ginsiAln) < 0 {
-		panic("G-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	// Check if string alignment is not empty
+	if len(ginsiString) < 1 {
+		EmptyAlnError("G-INSI", inputPath)
+		os.Exit(1)
 	}
-	if len(linsiAln) < 0 {
-		panic("L-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	if len(linsiString) < 1 {
+		EmptyAlnError("L-INSI", inputPath)
+		os.Exit(1)
 	}
-	if len(einsiAln) < 0 {
-		panic("E-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	if len(einsiString) < 1 {
+		EmptyAlnError("E-INSI", inputPath)
+		os.Exit(1)
 	}
+
+	// Translate FASTA to protein then align
+	ginsiAln := StringToCodonSequences(ginsiString)
+	linsiAln := StringToCodonSequences(linsiString)
+	einsiAln := StringToCodonSequences(einsiString)
 
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
