@@ -41,19 +41,14 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 	args = append([]string{"--thread", strconv.Itoa(threads)}, args...)
 
 	// Output MAFFT call
-	os.Stderr.WriteString(absPath + " " + strings.Join(args, " ") + "\n")
+	// os.Stderr.WriteString(absPath + " " + strings.Join(args, " ") + "\n")
 
 	cmd := exec.Command(absPath, args...)
 
-	err := cmd.Run()
+	stdout, err := cmd.Output()
 	if err != nil {
 		MafftError(err)
 		os.Exit(1)
-	}
-
-	stdout, err := cmd.Output()
-	if err != nil {
-		panic(err)
 	}
 
 	return string(stdout), nil
@@ -78,6 +73,7 @@ func EinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	os.Stderr.WriteString("E")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
@@ -95,6 +91,7 @@ func LinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	os.Stderr.WriteString("L")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
@@ -112,6 +109,7 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	os.Stderr.WriteString("G")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
@@ -130,15 +128,10 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 	os.Stdin.Write(buff.Bytes())
 	cmd.Stdin = os.Stdin
 
-	err := cmd.Run()
+	stdout, err := cmd.Output()
 	if err != nil {
 		MafftError(err)
 		os.Exit(1)
-	}
-
-	stdout, err := cmd.Output()
-	if err != nil {
-		panic(err)
 	}
 	return string(stdout), nil
 }
@@ -446,6 +439,8 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 
 	const mafftCmd = "mafft"
 
+	os.Stderr.WriteString(fmt.Sprintf("%s: ", inputPath))
+
 	ginsiString := GinsiAlign(mafftCmd, inputPath, iterations, strategy)
 	linsiString := LinsiAlign(mafftCmd, inputPath, iterations, strategy)
 	einsiString := EinsiAlign(mafftCmd, inputPath, iterations, strategy)
@@ -467,6 +462,7 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 	ginsiAln := StringToCharSequences(ginsiString)
 	linsiAln := StringToCharSequences(linsiString)
 	einsiAln := StringToCharSequences(einsiString)
+	os.Stderr.WriteString(".")
 
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
@@ -480,12 +476,15 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 		ginsiAln.UngappedPositionMatrix(gapChar),
 		linsiAln.UngappedPositionMatrix(gapChar),
 	)
+	os.Stderr.WriteString(".")
 
 	if toUpper == true {
 		einsiAln.ToUpper()
 	} else if toLower == true {
 		einsiAln.ToLower()
 	}
+
+	os.Stderr.WriteString(" Done.\n")
 
 	return BufferedMarkedAlignment(einsiAln, consistentPos, markerID, consistentMarker, inconsistentMarker)
 }
@@ -644,11 +643,9 @@ func main() {
 		}
 		var outputPath string
 		for _, f := range files {
-			fmt.Print(f)
 			buffer := ConsistentAlnPipeline(f, *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr, strategy)
 			outputPath = *outDirPtr + "/" + filepath.Base(f) + *outSuffixPtr
 			WriteBufferToFile(outputPath, buffer)
-			fmt.Print("Done.\n")
 		}
 	}
 }
