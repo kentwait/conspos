@@ -39,8 +39,15 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 
 	threads := runtime.NumCPU() - 1
 	args = append([]string{"--thread", strconv.Itoa(threads)}, args...)
+	os.Stderr.WriteString(strings.Join(args, " ") + "\n")
 
 	cmd := exec.Command(absPath, args...)
+
+	err := cmd.Run()
+	if err != nil {
+		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+
 	stdout, err := cmd.Output()
 	if err != nil {
 		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
@@ -65,13 +72,13 @@ func EinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	case 1:
 		args = []string{
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	case 2:
 		args = []string{
 			"--nomemsave",
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	}
 	args = append(args, []string{
@@ -98,13 +105,13 @@ func LinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	case 1:
 		args = []string{
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	case 2:
 		args = []string{
 			"--nomemsave",
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	}
 	args = append(args, []string{
@@ -131,13 +138,13 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	case 1:
 		args = []string{
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	case 2:
 		args = []string{
 			"--nomemsave",
 			"--retree", "1",
-			"--maxiterate", "2",
+			"--maxiterate", "1",
 		}
 	}
 	args = append(args, []string{
@@ -162,6 +169,12 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 
 	os.Stdin.Write(buff.Bytes())
 	cmd.Stdin = os.Stdin
+
+	err := cmd.Run()
+	if err != nil {
+		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+
 	stdout, err := cmd.Output()
 	if err != nil {
 		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
