@@ -1,5 +1,7 @@
 # ConsAlign
 
+[![Build Status](https://travis-ci.org/kentwait/consalign.svg?branch=master)](https://travis-ci.org/kentwait/consalign)
+
 Computes the consensus alignment by comparing alignment patterns
 of global, local and sub-global multiple sequence alignments generated 
 by the alignment program [MAFFT][1].
