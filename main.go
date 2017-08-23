@@ -51,40 +51,100 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 
 // EinsiAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func EinsiAlign(mafftCmd, fastaPath string, iterations int) string {
-	args := []string{
-		// "--quiet",
-		"--genafpair",
-		"--maxiterate",
-		strconv.Itoa(iterations),
-		fastaPath,
+func EinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
+	// 0 means normal processing
+	// 1 means use long sequence optimizations with memory saving DP
+	// 2 means use long sequence optimizations with normal DP
+	var args []string
+	switch strategy {
+	case 0:
+		args = []string{
+			"--maxiterate",
+			strconv.Itoa(iterations),
+		}
+	case 1:
+		args = []string{
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
+	case 2:
+		args = []string{
+			"--nomemsave",
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
 	}
+	args = append(args, []string{
+		"--genafpair",
+		"--quiet",
+		fastaPath,
+	}...)
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
 
 // LinsiAlign calls MAFFT to align sequences by local alignment.
-func LinsiAlign(mafftCmd, fastaPath string, iterations int) string {
-	args := []string{
-		// "--quiet",
-		"--localpair",
-		"--maxiterate",
-		strconv.Itoa(iterations),
-		fastaPath,
+func LinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
+	// 0 means normal processing
+	// 1 means use long sequence optimizations with memory saving DP
+	// 2 means use long sequence optimizations with normal DP
+	var args []string
+	switch strategy {
+	case 0:
+		args = []string{
+			"--maxiterate",
+			strconv.Itoa(iterations),
+		}
+	case 1:
+		args = []string{
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
+	case 2:
+		args = []string{
+			"--nomemsave",
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
 	}
+	args = append(args, []string{
+		"--localpair",
+		"--quiet",
+		fastaPath,
+	}...)
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
 
 // GinsiAlign calls MAFFT to align sequences by global alignment.
-func GinsiAlign(mafftCmd, fastaPath string, iterations int) string {
-	args := []string{
-		// "--quiet",
-		"--globalpair",
-		"--maxiterate",
-		strconv.Itoa(iterations),
-		fastaPath,
+func GinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
+	// 0 means normal processing
+	// 1 means use long sequence optimizations with memory saving DP
+	// 2 means use long sequence optimizations with normal DP
+	var args []string
+	switch strategy {
+	case 0:
+		args = []string{
+			"--maxiterate",
+			strconv.Itoa(iterations),
+		}
+	case 1:
+		args = []string{
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
+	case 2:
+		args = []string{
+			"--nomemsave",
+			"--retree", "1",
+			"--maxiterate", "2",
+		}
 	}
+	args = append(args, []string{
+		"--globalpair",
+		"--quiet",
+		fastaPath,
+	}...)
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
@@ -163,6 +223,8 @@ func AlignCodonsToString(c, p SequenceAlignment) string {
 	b := AlignCodonsToBuffer(c, p)
 	return b.String()
 }
+
+// TODO : complease e, g, l alignment methods using updated code. see einsialign.
 
 // EinsiCodonAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
@@ -399,13 +461,13 @@ func BufferedMarkedAlignment(template SequenceAlignment, consistentPos []bool, m
 // ConsistentAlnPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
-func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
+func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool, strategy int) bytes.Buffer {
 
 	const mafftCmd = "mafft"
 
-	ginsiString := GinsiAlign(mafftCmd, inputPath, iterations)
-	linsiString := LinsiAlign(mafftCmd, inputPath, iterations)
-	einsiString := EinsiAlign(mafftCmd, inputPath, iterations)
+	ginsiString := GinsiAlign(mafftCmd, inputPath, iterations, strategy)
+	linsiString := LinsiAlign(mafftCmd, inputPath, iterations, strategy)
+	einsiString := EinsiAlign(mafftCmd, inputPath, iterations, strategy)
 
 	// Check if string alignment is not empty
 	if len(ginsiString) < 1 {
@@ -530,12 +592,27 @@ func main() {
 	inSuffixPtr := flag.String("input_suffix", ".fa", "Only files ending with this suffix will be processed. Used in conjunction with -batch.")
 	outSuffixPtr := flag.String("output_suffix", ".aln", "Suffix to be appended to the end of the filename of resulting alignments. Used in conjunction with -batch.")
 	outDirPtr := flag.String("outdir", "", "Output directory where alignments will be saved. Used in conjunction with -batch.")
+	longMethodPtr := flag.Bool("long", false, "Optimized MAFFT parameters (--retree 1, --maxiterate 2) for long sequences. Overrides -maxiterate setting.")
+	longDPMethodPtr := flag.Bool("long_nomemsave", false, "Optimized MAFFT parameters (--retree 1, --maxiterate 2 --nomemsave) for long sequences without using memory saving techniques. About 2x faster than -long but requires huge RAM space! Overrides -maxiterate setting.")
 
 	flag.Parse()
 
 	if _, lookErr := exec.LookPath("mafft"); lookErr != nil {
 		os.Stderr.WriteString("Error: \"mafft\" is not found in $PATH. Please make sure that mafft is installed and is accessible through the command \"mafft\".\n")
 		os.Exit(1)
+	}
+
+	// Alignment strategy
+	if *longMethodPtr == true && *longDPMethodPtr == true {
+		os.Stderr.WriteString("Error: both -long and -long_nomemsave options cannot be used at the same time.")
+		os.Exit(1)
+	}
+	strategy := 0
+	if *longMethodPtr == true {
+		strategy = 1
+	}
+	if *longDPMethodPtr == true {
+		strategy = 2
 	}
 
 	if len(*isBatchPtr) < 1 {
@@ -562,7 +639,7 @@ func main() {
 			toUpper = true
 		}
 
-		buffer := ConsistentAlnPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
+		buffer := ConsistentAlnPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr, strategy)
 
 		fmt.Print(buffer.String())
 
@@ -593,7 +670,7 @@ func main() {
 		var outputPath string
 		for _, f := range files {
 			fmt.Print(f)
-			buffer := ConsistentAlnPipeline(f, *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
+			buffer := ConsistentAlnPipeline(f, *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr, strategy)
 			outputPath = *outDirPtr + "/" + filepath.Base(f) + *outSuffixPtr
 			WriteBufferToFile(outputPath, buffer)
 			fmt.Print("Done.\n")
