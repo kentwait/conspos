@@ -63,25 +63,9 @@ func EinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	// 1 means use long sequence optimizations with memory saving DP
 	// 2 means use long sequence optimizations with normal DP
 	var args []string
-	switch strategy {
-	case 0:
-		args = []string{
-			"--maxiterate",
-			strconv.Itoa(iterations),
-		}
-	case 1:
-		args = []string{
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	case 2:
-		args = []string{
-			"--nomemsave",
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	}
 	args = append(args, []string{
+		"--maxiterate",
+		strconv.Itoa(iterations),
 		"--genafpair",
 		"--quiet",
 		fastaPath,
@@ -96,25 +80,9 @@ func LinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	// 1 means use long sequence optimizations with memory saving DP
 	// 2 means use long sequence optimizations with normal DP
 	var args []string
-	switch strategy {
-	case 0:
-		args = []string{
-			"--maxiterate",
-			strconv.Itoa(iterations),
-		}
-	case 1:
-		args = []string{
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	case 2:
-		args = []string{
-			"--nomemsave",
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	}
 	args = append(args, []string{
+		"--maxiterate",
+		strconv.Itoa(iterations),
 		"--localpair",
 		"--quiet",
 		fastaPath,
@@ -129,25 +97,9 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations, strategy int) string {
 	// 1 means use long sequence optimizations with memory saving DP
 	// 2 means use long sequence optimizations with normal DP
 	var args []string
-	switch strategy {
-	case 0:
-		args = []string{
-			"--maxiterate",
-			strconv.Itoa(iterations),
-		}
-	case 1:
-		args = []string{
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	case 2:
-		args = []string{
-			"--nomemsave",
-			"--retree", "1",
-			"--maxiterate", "1",
-		}
-	}
 	args = append(args, []string{
+		"--maxiterate",
+		strconv.Itoa(iterations),
 		"--globalpair",
 		"--quiet",
 		fastaPath,
@@ -605,9 +557,6 @@ func main() {
 	inSuffixPtr := flag.String("input_suffix", ".fa", "Only files ending with this suffix will be processed. Used in conjunction with -batch.")
 	outSuffixPtr := flag.String("output_suffix", ".aln", "Suffix to be appended to the end of the filename of resulting alignments. Used in conjunction with -batch.")
 	outDirPtr := flag.String("outdir", "", "Output directory where alignments will be saved. Used in conjunction with -batch.")
-	longMethodPtr := flag.Bool("long", false, "Optimized MAFFT parameters (--retree 1, --maxiterate 2) for long sequences. Overrides -maxiterate setting.")
-	longDPMethodPtr := flag.Bool("long_nomemsave", false, "Optimized MAFFT parameters (--retree 1, --maxiterate 2 --nomemsave) for long sequences without using memory saving techniques. About 2x faster than -long but requires huge RAM space! Overrides -maxiterate setting.")
-
 	flag.Parse()
 
 	if _, lookErr := exec.LookPath("mafft"); lookErr != nil {
@@ -615,18 +564,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Alignment strategy
-	if *longMethodPtr == true && *longDPMethodPtr == true {
-		os.Stderr.WriteString("Error: both -long and -long_nomemsave options cannot be used at the same time.")
-		os.Exit(1)
-	}
+	// Alignment strategy presets for future use
 	strategy := 0
-	if *longMethodPtr == true {
-		strategy = 1
-	}
-	if *longDPMethodPtr == true {
-		strategy = 2
-	}
 
 	if len(*isBatchPtr) < 1 {
 		// Single file mode
