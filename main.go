@@ -31,7 +31,7 @@ func Translate(s string) *bytes.Buffer {
 }
 
 // ExecMafft calls the MAFFT program with the given arguments.
-func ExecMafft(mafftCmd string, args []string) string {
+func ExecMafft(mafftCmd string, args []string) (string, error) {
 	absPath, lookErr := exec.LookPath(mafftCmd)
 	if lookErr != nil {
 		panic(lookErr)
@@ -43,55 +43,55 @@ func ExecMafft(mafftCmd string, args []string) string {
 	cmd := exec.Command(absPath, args...)
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + string(stdout))
-		return ""
+		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
 	}
-	return string(stdout)
+
+	return string(stdout), nil
 }
 
 // EinsiAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func EinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func EinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
-		"--quiet",
+		// "--quiet",
 		"--genafpair",
 		"--maxiterate",
 		strconv.Itoa(iterations),
 		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
-	return
+	stdout, _ := ExecMafft(mafftCmd, args)
+	return stdout
 }
 
 // LinsiAlign calls MAFFT to align sequences by local alignment.
-func LinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func LinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
-		"--quiet",
+		// "--quiet",
 		"--localpair",
 		"--maxiterate",
 		strconv.Itoa(iterations),
 		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
-	return
+	stdout, _ := ExecMafft(mafftCmd, args)
+	return stdout
 }
 
 // GinsiAlign calls MAFFT to align sequences by global alignment.
-func GinsiAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func GinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
-		"--quiet",
+		// "--quiet",
 		"--globalpair",
 		"--maxiterate",
 		strconv.Itoa(iterations),
 		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
-	return
+	stdout, _ := ExecMafft(mafftCmd, args)
+	return stdout
 }
 
 // ExecMafftStdin calls the MAFFT program with the given arguments and using
 // standard input as input.
-func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) string {
+func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, error) {
 	absPath, lookErr := exec.LookPath(mafftCmd)
 	if lookErr != nil {
 		panic(lookErr)
@@ -104,10 +104,9 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) string {
 	cmd.Stdin = os.Stdin
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + string(stdout))
-		return ""
+		panic(fmt.Sprint(err) + "\nMAFFT may have encountered an error. Check if input sequences are valid.")
 	}
-	return string(stdout)
+	return string(stdout), nil
 }
 
 // FastaToCodonSequence reads a FASTA file and converts it into a sequence
@@ -180,7 +179,7 @@ func EinsiCodonAlign(mafftCmd, fastaPath string, iterations int) string {
 	// Read protein sequences from SequenceAlignment of CodonSequences and create a Fasta string in buffer
 	buff := ProtSequencesToBuffer(c)
 	// Pass Fasta string as stdin to mafft then capture stdout string
-	stdout := ExecMafftStdin(mafftCmd, buff, args)
+	stdout, _ := ExecMafftStdin(mafftCmd, buff, args)
 
 	// Create CharSequences from protein alignment
 	p := StringToCharSequences(stdout)
@@ -192,7 +191,7 @@ func EinsiCodonAlign(mafftCmd, fastaPath string, iterations int) string {
 }
 
 // LinsiCodonAlign calls MAFFT to align sequences by local alignment.
-func LinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func LinsiCodonAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
 		"--quiet",
 		"--localpair",
@@ -200,12 +199,12 @@ func LinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string)
 		strconv.Itoa(iterations),
 		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
-	return
+	stdout, _ := ExecMafft(mafftCmd, args)
+	return stdout
 }
 
 // GinsiCodonAlign calls MAFFT to align sequences by global alignment.
-func GinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string) {
+func GinsiCodonAlign(mafftCmd, fastaPath string, iterations int) string {
 	args := []string{
 		"--quiet",
 		"--globalpair",
@@ -213,8 +212,8 @@ func GinsiCodonAlign(mafftCmd, fastaPath string, iterations int) (stdout string)
 		strconv.Itoa(iterations),
 		fastaPath,
 	}
-	stdout = ExecMafft(mafftCmd, args)
-	return
+	stdout, _ := ExecMafft(mafftCmd, args)
+	return stdout
 }
 
 // StringToCharSequences loads a string generated from properly formatted
@@ -301,14 +300,14 @@ func SequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 	return buffer
 }
 
-// SequencesToString converts sequences in the sequene alignment into a FASTA
+// ProtSequencesToString converts sequences in the sequene alignment into a FASTA
 // formatted string.
 func ProtSequencesToString(a SequenceAlignment) string {
 	buffer := SequencesToBuffer(a)
 	return buffer.String()
 }
 
-// SequencesToBuffer converts sequences in the sequene alignment into a buffered
+// ProtSequencesToBuffer converts sequences in the sequene alignment into a buffered
 // stream which can then be converted to bytes or a string.
 func ProtSequencesToBuffer(a SequenceAlignment) bytes.Buffer {
 	var buffer bytes.Buffer
@@ -404,20 +403,27 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 
 	const mafftCmd = "mafft"
 
-	ginsiAln := StringToCharSequences(GinsiAlign(mafftCmd, inputPath, iterations))
-	linsiAln := StringToCharSequences(LinsiAlign(mafftCmd, inputPath, iterations))
-	einsiAln := StringToCharSequences(EinsiAlign(mafftCmd, inputPath, iterations))
+	ginsiString := GinsiAlign(mafftCmd, inputPath, iterations)
+	linsiString := LinsiAlign(mafftCmd, inputPath, iterations)
+	einsiString := EinsiAlign(mafftCmd, inputPath, iterations)
 
-	// Check if buffer alignment is not empty
-	if len(ginsiAln) < 0 {
-		panic("G-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	// Check if string alignment is not empty
+	if len(ginsiString) < 1 {
+		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "G-INSI", inputPath)
+		panic(msg)
 	}
-	if len(linsiAln) < 0 {
-		panic("L-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	if len(linsiString) < 1 {
+		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "L-INSI", inputPath)
+		panic(msg)
 	}
-	if len(einsiAln) < 0 {
-		panic("E-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	if len(einsiString) < 1 {
+		msg := fmt.Sprintf("%s alignment from %s is empty.\nMAFFT may have encountered an error. Check if input sequences are valid.", "E-INSI", inputPath)
+		panic(msg)
 	}
+
+	ginsiAln := StringToCharSequences(ginsiString)
+	linsiAln := StringToCharSequences(linsiString)
+	einsiAln := StringToCharSequences(einsiString)
 
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
@@ -586,10 +592,11 @@ func main() {
 		}
 		var outputPath string
 		for _, f := range files {
-			fmt.Println(f)
+			fmt.Print(f)
 			buffer := ConsistentAlnPipeline(f, *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 			outputPath = *outDirPtr + "/" + filepath.Base(f) + *outSuffixPtr
 			WriteBufferToFile(outputPath, buffer)
+			fmt.Print("Done.\n")
 		}
 	}
 }
