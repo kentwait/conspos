@@ -232,5 +232,5 @@ to compile this program.
 - [ConsAlign for Linux (Ubuntu)][3]
 
 [1]: http://mafft.cbrc.jp/alignment/software/
-[2]: https://github.com/kentwait/consalign/releases/download/v1.0/consalign
+[2]: https://github.com/kentwait/consalign/releases/download/v1.0.1/consalign
 [3]: /
