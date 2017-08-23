@@ -408,6 +408,17 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 	linsiAln := StringToCharSequences(LinsiAlign(mafftCmd, inputPath, iterations))
 	einsiAln := StringToCharSequences(EinsiAlign(mafftCmd, inputPath, iterations))
 
+	// Check if buffer alignment is not empty
+	if len(ginsiAln) < 0 {
+		panic("G-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+	if len(linsiAln) < 0 {
+		panic("L-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+	if len(einsiAln) < 0 {
+		panic("E-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
 		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
@@ -438,6 +449,17 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	ginsiAln := StringToCodonSequences(GinsiCodonAlign(mafftCmd, inputPath, iterations))
 	linsiAln := StringToCodonSequences(LinsiCodonAlign(mafftCmd, inputPath, iterations))
 	einsiAln := StringToCodonSequences(EinsiCodonAlign(mafftCmd, inputPath, iterations))
+
+	// Check if buffer alignment is not empty
+	if len(ginsiAln) < 0 {
+		panic("G-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+	if len(linsiAln) < 0 {
+		panic("L-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
+	if len(einsiAln) < 0 {
+		panic("E-INSI alignment is empty. MAFFT may have encountered an error. Check if input sequences are valid.")
+	}
 
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
