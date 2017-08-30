@@ -27,7 +27,7 @@ Smith–Waterman algorithm, and local with affine-gap penalty scoring.
 Even if these alignments were based on the same set of sequences, the
 result could be vastly different. Thus, it is important to identify sites
 that align robustly regardless of the alignment model used. We call
-robustly aligning sites "consistent sites" and sites which exhibit mixed
+robustly aligning sites "consistent sites" and sites which exhibhttps://github.com/kentwait/consalign/releases/download/v1.0.1/consalign_linux_amd64it mixed
 patterns "inconsistent sites".
 
 ## Method
@@ -229,8 +229,8 @@ to compile this program.
 
 - [MAFFT download page][1]
 - [ConsAlign for MacOS][2]
-- [ConsAlign for Linux (Ubuntu)][3]
+- [ConsAlign for Linux (compiled on Ubuntu 16.04 x86-64)][3]
 
 [1]: http://mafft.cbrc.jp/alignment/software/
 [2]: https://github.com/kentwait/consalign/releases/download/v1.0.1/consalign
-[3]: /
+[3]: https://github.com/kentwait/consalign/releases/download/v1.0.1/consalign_linux_amd64
