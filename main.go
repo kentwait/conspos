@@ -77,6 +77,9 @@ func main() {
 
 		var buffer bytes.Buffer
 		if *isCodonPtr {
+			if *gapCharPtr == "-" {
+				*gapCharPtr = "---"
+			}
 			buffer = ConsistentCodonAlnPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 		} else {
 			buffer = ConsistentAlnPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)

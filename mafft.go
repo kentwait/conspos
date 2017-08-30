@@ -93,12 +93,10 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 	if lookErr != nil {
 		panic(lookErr)
 	}
-
 	args = append(args, "-")
-	cmd := exec.Command(absPath, args...)
 
-	os.Stdin.Write(buff.Bytes())
-	cmd.Stdin = os.Stdin
+	cmd := exec.Command(absPath, args...)
+	cmd.Stdin = &buff
 
 	stdout, err := cmd.Output()
 	if err != nil {
@@ -121,14 +119,16 @@ func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	os.Stderr.WriteString("E")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
 	// Create CharSequences from protein alignment
-	p := StringToCodonSequences(stdout)
+	p := StringToCharSequences(stdout)
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
 	newStdout := AlignCodonsToString(c, p)
+	os.Stderr.WriteString("C")
 
 	return newStdout
 }
@@ -143,6 +143,7 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	os.Stderr.WriteString("L")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
@@ -151,6 +152,7 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
 	newStdout := AlignCodonsToString(c, p)
+	os.Stderr.WriteString("C")
 
 	return newStdout
 }
@@ -165,6 +167,7 @@ func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	os.Stderr.WriteString("G")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
@@ -173,6 +176,7 @@ func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
 	newStdout := AlignCodonsToString(c, p)
+	os.Stderr.WriteString("C")
 
 	return newStdout
 }

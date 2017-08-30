@@ -288,6 +288,16 @@ func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
 	return pos
 }
 
+func ConsistentCodonAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
+	var codonPos []bool
+	for _, protPos := range ConsistentAlignmentPositions(gapChar, matrices...) {
+		for i := 0; i < 3; i++ {
+			codonPos = append(codonPos, protPos)
+		}
+	}
+	return codonPos
+}
+
 // ConsistentAlnPipeline aligns using global, local, and affine-local alignment
 // strategies to determine positions that have a consistent alignment pattern over
 // the three different strategies.
@@ -390,7 +400,7 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 		linsiAln.ToFasta(inputPath + ".linsi.aln")
 	}
 
-	consistentPos := ConsistentAlignmentPositions(
+	consistentPos := ConsistentCodonAlignmentPositions(
 		gapChar,
 		einsiAln.UngappedPositionMatrix(gapChar),
 		ginsiAln.UngappedPositionMatrix(gapChar),
