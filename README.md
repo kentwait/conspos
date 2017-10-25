@@ -1,6 +1,7 @@
 # ConsAlign
 
 [![Build Status](https://travis-ci.org/kentwait/consalign.svg?branch=master)](https://travis-ci.org/kentwait/consalign)
+[![Coverage Status](https://coveralls.io/repos/github/kentwait/consalign/badge.svg?branch=master)](https://coveralls.io/github/kentwait/consalign?branch=master)
 
 Computes the consensus alignment by comparing alignment patterns
 of global, local and sub-global multiple sequence alignments generated 
