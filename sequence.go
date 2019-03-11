@@ -83,12 +83,17 @@ func (s *CharSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // If a character matches the gap character, -1 is inserted instead of the
 // ungapped count.
 func (s *CharSequence) UngappedPositionSlice(gapChar string) (arr []int) {
-	gapByte := []byte(gapChar)[0]
+	// Assumes gapChar contains only a "single character"
+	// Convert single character string to rune slice, taking the first item
+	gapRune := []rune(gapChar)[0]
 	cnt := 0
-	for j := 0; j < len(s.seq); j++ {
-		if s.seq[j] != gapByte {
+	for _, s := range []rune(s.seq) {
+		// If sequence rune is not a gap character rune, append current count value to array and increment
+		if s != gapRune {
 			arr = append(arr, cnt)
 			cnt++
+			// If it is equal to the gap character rune, then append a -1.
+			// Do not increment.
 		} else {
 			arr = append(arr, -1)
 		}
