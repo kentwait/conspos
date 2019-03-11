@@ -10,7 +10,7 @@ func TestSequenceAlignment_UngappedCoords(t *testing.T) {
 	seq1 := "TTT---TTCTTATTG"
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
-	a := SequenceAlignment{
+	a := Alignment{
 		sequence.NewCharSequence("test", "", seq1),
 		sequence.NewCharSequence("test", "", seq2),
 		sequence.NewCharSequence("test", "", seq3),
@@ -40,7 +40,7 @@ func TestSequenceAlignment_UngappedPositionMatrix(t *testing.T) {
 	seq1 := "TTT---TTCTTATTG"
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
-	a := SequenceAlignment{
+	a := Alignment{
 		sequence.NewCharSequence("test", "", seq1),
 		sequence.NewCharSequence("test", "", seq2),
 		sequence.NewCharSequence("test", "", seq3),
@@ -68,7 +68,7 @@ func TestSequenceAlignment_ToFastaString(t *testing.T) {
 	seq1 := "TTT---TTCTTATTG"
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
-	a := SequenceAlignment{
+	a := Alignment{
 		sequence.NewCharSequence("test", "", seq1),
 		sequence.NewCharSequence("test", "", seq2),
 		sequence.NewCharSequence("test", "", seq3),

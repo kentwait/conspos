@@ -126,7 +126,7 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 
 // EinsiCodonAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
+func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.Alignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
@@ -151,7 +151,7 @@ func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln
 }
 
 // LinsiCodonAlign calls MAFFT to align sequences by local alignment.
-func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
+func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.Alignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
@@ -176,7 +176,7 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln
 }
 
 // GinsiCodonAlign calls MAFFT to align sequences by global alignment.
-func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
+func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.Alignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
