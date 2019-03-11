@@ -9,9 +9,7 @@ import (
 	aln "github.com/kentwait/conspos/alignment"
 )
 
-// ConsistentAlignmentPositions returns the list of positions in the alignment
-// that are considered consistent given by the alignment pattern per site
-// across all given alignments.
+// ConsistentAlignmentPositions returns the list of positions in the alignment that are considered consistent given by the alignment pattern per site across all given alignments.
 func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
 	// Transpose matrices and combine as string
 	patternSetMap := make(map[string]int)
@@ -122,12 +120,13 @@ func ConsistentAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
 	return pos
 }
 
+// ConsistentCodonAlignmentPositions returns the list of positions in the codon alignment that are considered consistent given by the alignment pattern per site across all given alignments.
 func ConsistentCodonAlignmentPositions(gapChar string, matrices ...[][]int) []bool {
+	// ConsistentAlignmentPositions constructs a boolean slice for the codon matrices
 	var codonPos []bool
-	for _, protPos := range ConsistentAlignmentPositions(gapChar, matrices...) {
-		for i := 0; i < 3; i++ {
-			codonPos = append(codonPos, protPos)
-		}
+	for _, pos := range ConsistentAlignmentPositions(gapChar, matrices...) {
+		// Added 3 times to because each codon has 3 nucleotide sites
+		codonPos = append(codonPos, pos, pos, pos)
 	}
 	return codonPos
 }
