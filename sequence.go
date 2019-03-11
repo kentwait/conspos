@@ -286,7 +286,7 @@ func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
 func (s *CodonSequence) ToUpper() {
 	s.seq = strings.ToUpper(s.seq)
 	s.prot = strings.ToUpper(s.prot)
-	for i := 0; i < len(s.codons); i++ {
+	for i := range s.codons {
 		s.codons[i] = strings.ToUpper(s.codons[i])
 	}
 }
@@ -295,7 +295,7 @@ func (s *CodonSequence) ToUpper() {
 func (s *CodonSequence) ToLower() {
 	s.seq = strings.ToLower(s.seq)
 	s.prot = strings.ToLower(s.prot)
-	for i := 0; i < len(s.seq); i++ {
+	for i := range s.codons {
 		s.codons[i] = strings.ToLower(s.codons[i])
 	}
 }
