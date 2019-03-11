@@ -123,7 +123,7 @@ func (s *CharSequence) ToLower() {
 type CodonSequence struct {
 	CharSequence
 	prot   string
-	codons []string
+	codons []string // TODO: Change to *string to avoid duplication
 }
 
 // NewCodonSequence is a constructor that creates a new CodonSequence where
