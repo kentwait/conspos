@@ -131,11 +131,9 @@ func ConsistentCodonAlignmentPositions(gapChar string, matrices ...[][]int) []bo
 	return codonPos
 }
 
-// ConsistentAlnPipeline aligns using global, local, and affine-local alignment
-// strategies to determine positions that have a consistent alignment pattern over
-// the three different strategies.
+// ConsistentAlnPipeline aligns using global, local, and affine-local alignment strategies to determine positions that have a consistent alignment pattern over the three different strategies.
 func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
-
+	// TODO: Allow this to be a parameter instead of being hard-coded
 	const mafftCmd = "mafft"
 
 	os.Stderr.WriteString(fmt.Sprintf("%s: ", inputPath))
@@ -201,51 +199,52 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 	return MarkedAlignmentToBuffer(einsiAln, consistentPos, markerID, consistentMarker, inconsistentMarker)
 }
 
-// ConsistentCodonAlnPipeline aligns codon sequences using global, local, and
-// affine-local alignment strategies to determine positions that have a
-// consistent alignment pattern over the three different strategies.
+// ConsistentCodonAlnPipeline aligns codon sequences using global, local, and  affine-local alignment strategies to determine positions that have a consistent alignment pattern over the three different strategies.
 func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, inconsistentMarker string, iterations int, toUpper, toLower, saveTempAlns bool) bytes.Buffer {
-
+	// TODO: Allow this to be a parameter instead of being hard-coded
 	const mafftCmd = "mafft"
 
 	os.Stderr.WriteString(fmt.Sprintf("%s: ", inputPath))
 
-	// Create CodonSequences to generate translated protein sequence from nucleotide sequence
+	// Create an Alignment of CodonSequence to generate translated protein sequence from nucleotide sequence
 	c := FastaToCodonAlignment(inputPath)
 
 	// Read protein sequences from Alignment of CodonSequences and create a Fasta string in buffer
 	buff := aln.ProtAlignmentToBuffer(c)
 
+	// Pass buff to each of the three alignment strategies.
+	// These will align protein sequences in MAFFT.
+	// Based on the protein alignment, the original codon alignment is adjusted using the AlignCodonsUsingProtAlignment function.
 	ginsiString := GinsiCodonAlign(mafftCmd, buff, iterations, c)
 	linsiString := LinsiCodonAlign(mafftCmd, buff, iterations, c)
 	einsiString := EinsiCodonAlign(mafftCmd, buff, iterations, c)
 
 	// Check if string alignment is not empty
-	if len(ginsiString) < 1 {
+	if len(ginsiString) == 0 {
 		EmptyAlnError("G-INSI", inputPath)
-		os.Exit(1)
 	}
-	if len(linsiString) < 1 {
+	if len(linsiString) == 0 {
 		EmptyAlnError("L-INSI", inputPath)
-		os.Exit(1)
 	}
-	if len(einsiString) < 1 {
+	if len(einsiString) == 0 {
 		EmptyAlnError("E-INSI", inputPath)
-		os.Exit(1)
 	}
 
-	// Translate FASTA to protein then align
+	// The FASTA outputs are parsed to create codon alignments.
 	ginsiAln := aln.StringToCodonAlignment(ginsiString)
 	linsiAln := aln.StringToCodonAlignment(linsiString)
 	einsiAln := aln.StringToCodonAlignment(einsiString)
 	os.Stderr.WriteString(".")
 
+	// TODO: ToFasta conversion is unnecessary.
+	// *insiString is already in FASTA format
 	if saveTempAlns == true {
 		einsiAln.ToFasta(inputPath + ".einsi.aln")
 		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
 		linsiAln.ToFasta(inputPath + ".linsi.aln")
 	}
 
+	// consistentPos is a boolean slice indicating per position whether it is consistent or not. Length of consistentPos is the length of the codon alignment as single characters.
 	consistentPos := ConsistentCodonAlignmentPositions(
 		gapChar,
 		einsiAln.UngappedPositionMatrix(gapChar),
