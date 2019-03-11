@@ -1,7 +1,9 @@
 package main
 
+import "github.com/kentwait/conspos/sequence"
+
 // SequenceAlignment is a slice of Sequence pointers.
-type SequenceAlignment []Sequence
+type SequenceAlignment []sequence.Sequence
 
 // UngappedCoords returns the row and column positions in the sequence alignment
 // where the character does not match the gap character.

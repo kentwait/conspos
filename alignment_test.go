@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/kentwait/conspos/sequence"
 )
 
 func TestSequenceAlignment_UngappedCoords(t *testing.T) {
@@ -9,9 +11,9 @@ func TestSequenceAlignment_UngappedCoords(t *testing.T) {
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
 	a := SequenceAlignment{
-		&CharSequence{"test", "", seq1},
-		&CharSequence{"test", "", seq2},
-		&CharSequence{"test", "", seq3},
+		&sequence.CharSequence{"test", "", seq1},
+		&sequence.CharSequence{"test", "", seq2},
+		&sequence.CharSequence{"test", "", seq3},
 	}
 	expR := []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
 	expC := []int{0, 1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14}
@@ -39,9 +41,9 @@ func TestSequenceAlignment_UngappedPositionMatrix(t *testing.T) {
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
 	a := SequenceAlignment{
-		&CharSequence{"test", "", seq1},
-		&CharSequence{"test", "", seq2},
-		&CharSequence{"test", "", seq3},
+		&sequence.CharSequence{"test", "", seq1},
+		&sequence.CharSequence{"test", "", seq2},
+		&sequence.CharSequence{"test", "", seq3},
 	}
 	exp := [][]int{
 		[]int{0, 1, 2, -1, -1, -1, 3, 4, 5, 6, 7, 8, 9, 10, 11},
@@ -67,9 +69,9 @@ func TestSequenceAlignment_ToFastaString(t *testing.T) {
 	seq2 := "TTT---TTCTTTTTG"
 	seq3 := "TTTTTCTTC---TTG"
 	a := SequenceAlignment{
-		&CharSequence{"test", "", seq1},
-		&CharSequence{"test", "", seq2},
-		&CharSequence{"test", "", seq3},
+		&sequence.CharSequence{"test", "", seq1},
+		&sequence.CharSequence{"test", "", seq2},
+		&sequence.CharSequence{"test", "", seq3},
 	}
 	exp := ">test\nTTT---TTCTTATTG\n>test\nTTT---TTCTTTTTG\n>test\nTTTTTCTTC---TTG\n"
 
