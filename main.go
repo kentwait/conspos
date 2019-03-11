@@ -58,8 +58,8 @@ func main() {
 
 	flag.Parse()
 
-	if _, lookErr := exec.LookPath("mafft"); lookErr != nil {
-		os.Stderr.WriteString("Error: \"mafft\" is not found in $PATH. Please make sure that mafft is installed and is accessible through the command \"mafft\".\n")
+	if _, lookErr := exec.LookPath(*mafftPathPtr); lookErr != nil {
+		os.Stderr.WriteString("Error: Invalid MAFFT path. Make sure that the MAFFT executable is installed and is accessible at the path specified in -mafft_path.\n")
 		os.Exit(1)
 	}
 
