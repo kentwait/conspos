@@ -2,17 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
-)
 
-// MafftError writes to stderr that something has gone wrong with MAFFT.
-func MafftError(err error) {
-	os.Stderr.WriteString("Error: MAFFT did not exit properly (" + fmt.Sprint(err) + ")\nCheck if input sequences are valid.\n")
-}
+	aln "github.com/kentwait/conspos/alignment"
+)
 
 // MAFFT functions for nucleotide and protein alignments
 
@@ -130,7 +126,7 @@ func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, 
 
 // EinsiCodonAlign calls MAFFT to align sequences by local alignment with
 // affine-gap scoring.
-func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c SequenceAlignment) string {
+func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
@@ -155,7 +151,7 @@ func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 }
 
 // LinsiCodonAlign calls MAFFT to align sequences by local alignment.
-func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c SequenceAlignment) string {
+func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
@@ -180,7 +176,7 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 }
 
 // GinsiCodonAlign calls MAFFT to align sequences by global alignment.
-func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c SequenceAlignment) string {
+func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln.SequenceAlignment) string {
 	var args []string
 	args = append(args, []string{
 		"--maxiterate",
