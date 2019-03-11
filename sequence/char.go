@@ -15,6 +15,15 @@ type CharSequence struct {
 	seq   string
 }
 
+// NewCharSequence contructs a new CharSequence.
+func NewCharSequence(id, title, seq string) *CharSequence {
+	s := new(CharSequence)
+	s.id = id
+	s.title = title
+	s.seq = seq
+	return s
+}
+
 // ID returns the id field of CharSequence.
 func (s *CharSequence) ID() string {
 	return s.id
