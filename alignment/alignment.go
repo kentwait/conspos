@@ -1,6 +1,10 @@
-package main
+package alignment
 
-import "github.com/kentwait/conspos/sequence"
+import (
+	"os"
+
+	"github.com/kentwait/conspos/sequence"
+)
 
 // SequenceAlignment is a slice of Sequence pointers.
 type SequenceAlignment []sequence.Sequence
@@ -46,10 +50,18 @@ func (a SequenceAlignment) ToLower() {
 
 // ToFastaString returns the FASTA-formatted string of the sequence alignment.
 func (a SequenceAlignment) ToFastaString() string {
-	return SequencesToString(a)
+	return SequenceAlignmentToString(a)
 }
 
 // ToFasta saves the sequence alignment to a FASTA file.
 func (a SequenceAlignment) ToFasta(path string) {
-	WriteBufferToFile(path, SequencesToBuffer(a))
+	buff := SequenceAlignmentToBuffer(a)
+	f, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	buff.WriteTo(f)
+	f.Sync()
 }
