@@ -47,7 +47,7 @@ func (s *CharSequence) Sequence() string {
 
 // Char returns a single character from the seq field of CharSequence.
 func (s *CharSequence) Char(i int) string {
-	return string(s.seq[i])
+	return string([]rune(s.seq)[i])
 }
 
 // SetSequence assigns a string to the seq field of CharSequence.
@@ -174,7 +174,7 @@ func (s *CodonSequence) Prot() string {
 
 // Char returns a single nucleotide from the seq field of CodonSequence.
 func (s *CodonSequence) Char(i int) string {
-	return string(s.seq[i])
+	return string([]rune(s.seq)[i])
 }
 
 // ProtChar returns a single amino acid from the prot field of CodonSequence.
@@ -202,13 +202,20 @@ func (s *CodonSequence) Codon(i int) string {
 // nucleotide sequence into triplets and translating each codon into its
 // corresponding amino acid using the standard genetic code respectively.
 func (s *CodonSequence) SetSequence(seq string) {
-	if len(seq)%3 != 0 {
+	// Converts sequence to rune slice to deal with unicode chars
+	seqRune := []rune(seq)
+	if len(seqRune)%3 != 0 {
 		panic(fmt.Sprintf("Length of given seq \"%s\" is not divisible by 3", seq))
 	}
+	// Overwrite value of .seq
 	s.seq = seq
-	for i := 0; i < len(seq); i += 3 {
-		s.codons = append(s.codons, string(seq[i:i+3]))
+	// Overwrites value of .codons
+	var codons []string
+	for i := 0; i < len(seqRune); i += 3 {
+		codons = append(codons, string(seqRune[i:i+3]))
 	}
+	s.codons = codons
+	// Overwrites the value of .prot
 	s.prot = Translate(seq).String()
 }
 
@@ -218,23 +225,31 @@ func (s *CodonSequence) SetSequence(seq string) {
 // translating each codon into its corresponding amino acid using the
 // standard genetic code respectively.
 func (s *CodonSequence) SetCodons(seq []string) {
+	// Overwrites value of .codons
 	s.codons = seq
+	// Overwrite value of .seq
 	s.seq = strings.Join(seq, "")
+	// Overwrites the value of .prot
 	s.prot = Translate(s.seq).String()
 }
 
 // UngappedCoords returns the positions in the sequence where the character
 // does not match the gap character.
 func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
-	if len(gapChar)%3 != 0 {
+	// Counts length of the rune slice instead of byte length of the string
+	if len([]rune(gapChar))%3 != 0 {
 		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
 	}
+	// Range over the slice of codons
+	// If the codon does not match the gapChar string, then it is not a gap
+	// Adds its position to the set map.
 	set := make(map[int]struct{})
-	for j := 0; j < len(s.codons); j++ {
-		if s.codons[j] != gapChar {
+	for j, codon := range s.codons {
+		if codon != gapChar {
 			set[j] = struct{}{}
 		}
 	}
+	// Range of set. Since this is a map, order is scrambled.
 	for key := range set {
 		colCoords = append(colCoords, key)
 	}
@@ -247,14 +262,19 @@ func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // If a character matches the gap character, -1 is inserted instead of the
 // ungapped count.
 func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
-	if len(gapChar)%3 != 0 {
+	// Counts length of the rune slice instead of byte length of the string
+	if len([]rune(gapChar))%3 != 0 {
 		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
 	}
 	cnt := 0
-	for j := 0; j < len(s.codons); j++ {
-		if s.codons[j] != gapChar {
+	// Range over the slice of codons
+	// If the codon does not match the gapChar string, then it is not a gap
+	// Adds the current ungapped count to the array.
+	for _, codon := range s.codons {
+		if codon != gapChar {
 			arr = append(arr, cnt)
 			cnt++
+			// If it is a gap, adds -1 to the array instead
 		} else {
 			arr = append(arr, -1)
 		}
@@ -266,7 +286,7 @@ func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
 func (s *CodonSequence) ToUpper() {
 	s.seq = strings.ToUpper(s.seq)
 	s.prot = strings.ToUpper(s.prot)
-	for i := 0; i < len(s.codons); i++ {
+	for i := range s.codons {
 		s.codons[i] = strings.ToUpper(s.codons[i])
 	}
 }
@@ -275,7 +295,7 @@ func (s *CodonSequence) ToUpper() {
 func (s *CodonSequence) ToLower() {
 	s.seq = strings.ToLower(s.seq)
 	s.prot = strings.ToLower(s.prot)
-	for i := 0; i < len(s.seq); i++ {
+	for i := range s.codons {
 		s.codons[i] = strings.ToLower(s.codons[i])
 	}
 }
