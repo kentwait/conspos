@@ -236,15 +236,20 @@ func (s *CodonSequence) SetCodons(seq []string) {
 // UngappedCoords returns the positions in the sequence where the character
 // does not match the gap character.
 func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
-	if len(gapChar)%3 != 0 {
+	// Counts length of the rune slice instead of byte length of the string
+	if len([]rune(gapChar))%3 != 0 {
 		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
 	}
+	// Range over the slice of codons
+	// If the codon does not match the gapChar string, then it is not a gap
+	// Adds its position to the set map.
 	set := make(map[int]struct{})
-	for j := 0; j < len(s.codons); j++ {
-		if s.codons[j] != gapChar {
+	for j, codon := range s.codons {
+		if codon != gapChar {
 			set[j] = struct{}{}
 		}
 	}
+	// Range of set. Since this is a map, order is scrambled.
 	for key := range set {
 		colCoords = append(colCoords, key)
 	}
@@ -257,14 +262,19 @@ func (s *CodonSequence) UngappedCoords(gapChar string) (colCoords []int) {
 // If a character matches the gap character, -1 is inserted instead of the
 // ungapped count.
 func (s *CodonSequence) UngappedPositionSlice(gapChar string) (arr []int) {
-	if len(gapChar)%3 != 0 {
+	// Counts length of the rune slice instead of byte length of the string
+	if len([]rune(gapChar))%3 != 0 {
 		panic(fmt.Sprintf("Length of given gapChar \"%s\" is not equal to 3", gapChar))
 	}
 	cnt := 0
-	for j := 0; j < len(s.codons); j++ {
-		if s.codons[j] != gapChar {
+	// Range over the slice of codons
+	// If the codon does not match the gapChar string, then it is not a gap
+	// Adds the current ungapped count to the array.
+	for _, codon := range s.codons {
+		if codon != gapChar {
 			arr = append(arr, cnt)
 			cnt++
+			// If it is a gap, adds -1 to the array instead
 		} else {
 			arr = append(arr, -1)
 		}
