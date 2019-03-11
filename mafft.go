@@ -139,6 +139,7 @@ func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("E")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
@@ -163,6 +164,7 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("L")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
@@ -187,6 +189,7 @@ func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c Seq
 		"--quiet",
 	}...)
 
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("G")
 	// Pass Fasta string as stdin to mafft then capture stdout string
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
