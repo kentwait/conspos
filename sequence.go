@@ -47,7 +47,7 @@ func (s *CharSequence) Sequence() string {
 
 // Char returns a single character from the seq field of CharSequence.
 func (s *CharSequence) Char(i int) string {
-	return string(s.seq[i])
+	return string([]rune(s.seq)[i])
 }
 
 // SetSequence assigns a string to the seq field of CharSequence.
@@ -174,7 +174,7 @@ func (s *CodonSequence) Prot() string {
 
 // Char returns a single nucleotide from the seq field of CodonSequence.
 func (s *CodonSequence) Char(i int) string {
-	return string(s.seq[i])
+	return string([]rune(s.seq)[i])
 }
 
 // ProtChar returns a single amino acid from the prot field of CodonSequence.
