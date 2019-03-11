@@ -58,12 +58,16 @@ func main() {
 
 	flag.Parse()
 
+	// Checks if values of arguments are valid.
+
 	if _, lookErr := exec.LookPath(*mafftPathPtr); lookErr != nil {
 		os.Stderr.WriteString("Error: Invalid MAFFT path. Make sure that the MAFFT executable is installed and is accessible at the path specified in -mafft_path.\n")
 		os.Exit(1)
 	}
 
-	if len(*isBatchPtr) < 1 {
+	// The program is two modes: single file and batch mode.
+	// Because arguments are mode-dependent, the validity of arguments are checked depending whether or not -batch is empty (single file) or not (batch mode).
+	if len(*isBatchPtr) == 0 {
 		// Single file mode
 		args := flag.Args()
 
