@@ -87,11 +87,16 @@ func main() {
 			os.Exit(1)
 		}
 
-		switch {
-		case *changeCasePtr == "lower":
+		// Converts case change choices to boolean variables.
+		switch *changeCasePtr {
+		case "lower":
 			toLower = true
-		case *changeCasePtr == "upper":
+		case "upper":
 			toUpper = true
+		case "no":
+		default:
+			os.Stderr.WriteString("Error: Invalid -change_case value {upper|lower|no}.\n")
+			os.Exit(1)
 		}
 
 		var buffer bytes.Buffer
