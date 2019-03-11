@@ -115,19 +115,23 @@ func main() {
 		fmt.Print(buffer.String())
 
 	} else {
-		// Batch mode
+		// Batch mode is activated when the value of -batch is not empty.
+		// The -batch value is the directory containing the FASTA files to work on.
+		// Checks whether the path exists but it does not check if the path is a file or a directory.
 		if doesExist, _ := Exists(*isBatchPtr); doesExist == false {
 			os.Stderr.WriteString("Error: Specified directory containing FASTA files does not exist.\n")
 			os.Exit(1)
 		}
 
-		// Check if outdir flag used
-		// Check if folder exists
-		if len(*outDirPtr) < 1 {
+		// In batch mode, -outdir must be specified to tell ConsPos where to save the aligned files.
+		// Check is -outdir has any value.
+		if len(*outDirPtr) == 0 {
 			os.Stderr.WriteString("Error: Missing output directory.\nUse -outdir to specify an output directory where alignments will be saved.\n")
 			os.Exit(1)
 		}
-
+		// Checks if the specified output directory path exists.
+		// This does not check if the path is to a directory or a file.
+		// This does not check if the path (assuming its a directory) is empty.
 		if doesExist, _ := Exists(*outDirPtr); doesExist == false {
 			os.Stderr.WriteString("Error: Specified output directory does not exist.\n")
 			os.Exit(1)
@@ -138,6 +142,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		// Check whether to treat sequences as codon alignments or not and call the appropriate function
 		var outputPath string
 		var buffer bytes.Buffer
 		for _, f := range files {
