@@ -56,8 +56,7 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 	return string(stdout), nil
 }
 
-// EinsiAlign calls MAFFT to align sequences by local alignment with
-// affine-gap scoring.
+// EinsiAlign calls MAFFT to align sequences by local alignment with affine-gap scoring.
 func EinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 	var args []string
 	args = append(args, []string{
@@ -67,6 +66,7 @@ func EinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("E")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
@@ -82,6 +82,7 @@ func LinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("L")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
@@ -97,14 +98,17 @@ func GinsiAlign(mafftCmd, fastaPath string, iterations int) string {
 		"--quiet",
 		fastaPath,
 	}...)
+	// TODO: Add verbosity level to silence output
 	os.Stderr.WriteString("G")
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
 
-// ExecMafftStdin calls the MAFFT program with the given arguments and using
-// standard input as input.
+// ExecMafftStdin calls the MAFFT program with the given arguments and using standard input as input.
+// Returns stdout as a string and nil if no errors are encountered.
+// If an error occurs, returns a nil string and the error encountered.
 func ExecMafftStdin(mafftCmd string, buff bytes.Buffer, args []string) (string, error) {
+	// TODO: Combine with ExecMafft?
 	absPath, lookErr := exec.LookPath(mafftCmd)
 	if lookErr != nil {
 		panic(lookErr)
