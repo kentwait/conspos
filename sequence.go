@@ -59,12 +59,18 @@ func (s *CharSequence) SetSequence(seq string) {
 // does not match the gap character.
 func (s *CharSequence) UngappedCoords(gapChar string) (colCoords []int) {
 	set := make(map[int]struct{})
-	gapByte := []byte(gapChar)[0]
-	for j := 0; j < len(s.seq); j++ {
-		if s.seq[j] != gapByte {
-			set[j] = struct{}{}
+	// Assumes gapChar contains only a "single character"
+	// Convert single character string to rune slice, taking the first item
+	gapRune := []rune(gapChar)[0]
+	// Range over rune slice, j counts by Unicode code points, s is the rune representation of the character
+	for j, s := range []rune(s.seq) {
+		// If sequence rune is not a gap character rune, add to rune position to set, 0-indexed
+		if s != gapRune {
+			set[j] = struct{}{} // Uses empty anonymous struct
 		}
 	}
+	// Range over set of positions
+	// Since this is a map, order is scrambled
 	for key := range set {
 		colCoords = append(colCoords, key)
 	}
