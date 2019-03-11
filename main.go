@@ -99,8 +99,12 @@ func main() {
 			os.Exit(1)
 		}
 
+		// The program further splits into two more modes depending on whether the sequences should be treated as single character sites or codons (3 characters per site) and call the appropriate function.
+		// The gapchar argument depends on this.
+		// For example, if codons, the gapchar should be 3 characters long, and only a single character if not.
 		var buffer bytes.Buffer
 		if *isCodonPtr {
+			// TODO: gapchar check should be length, not char matching
 			if *gapCharPtr == "-" {
 				*gapCharPtr = "---"
 			}
