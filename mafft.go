@@ -141,10 +141,11 @@ func EinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
 	// Create CharSequences from protein alignment
-	p := StringToCharSequences(stdout)
+	p := aln.StringToCharAlignment(stdout)
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
-	newStdout := AlignCodonsToString(c, p)
+	buff := aln.AlignCodonsUsingProtAlignment(c, p)
+	newStdout := buff.String()
 	os.Stderr.WriteString("C")
 
 	return newStdout
@@ -166,10 +167,11 @@ func LinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
 	// Create CharSequences from protein alignment
-	p := StringToCharSequences(stdout)
+	p := aln.StringToCharAlignment(stdout)
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
-	newStdout := AlignCodonsToString(c, p)
+	buff := aln.AlignCodonsUsingProtAlignment(c, p)
+	newStdout := buff.String()
 	os.Stderr.WriteString("C")
 
 	return newStdout
@@ -191,10 +193,11 @@ func GinsiCodonAlign(mafftCmd string, buffer bytes.Buffer, iterations int, c aln
 	stdout, _ := ExecMafftStdin(mafftCmd, buffer, args)
 
 	// Create CharSequences from protein alignment
-	p := StringToCharSequences(stdout)
+	p := aln.StringToCharAlignment(stdout)
 
 	// Use protein alignment to offset codons and match alignment. Output as Fasta string
-	newStdout := AlignCodonsToString(c, p)
+	buff := aln.AlignCodonsUsingProtAlignment(c, p)
+	newStdout := buff.String()
 	os.Stderr.WriteString("C")
 
 	return newStdout

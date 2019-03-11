@@ -154,7 +154,14 @@ func main() {
 				buffer = ConsistentAlnPipeline(f, *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 			}
 			outputPath = *outDirPtr + "/" + filepath.Base(f) + *outSuffixPtr
-			WriteBufferToFile(outputPath, buffer)
+			f, err := os.Create(outputPath)
+			if err != nil {
+				panic(err)
+			}
+			defer f.Close()
+
+			buffer.WriteTo(f)
+			f.Sync()
 
 			buffer.Reset()
 		}

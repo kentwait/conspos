@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	aln "github.com/kentwait/conspos/alignment"
 )
 
 // ConsistentAlignmentPositions returns the list of positions in the alignment
@@ -81,9 +83,9 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 		os.Exit(1)
 	}
 
-	ginsiAln := StringToCharAlignment(ginsiString)
-	linsiAln := StringToCharAlignment(linsiString)
-	einsiAln := StringToCharAlignment(einsiString)
+	ginsiAln := aln.StringToCharAlignment(ginsiString)
+	linsiAln := aln.StringToCharAlignment(linsiString)
+	einsiAln := aln.StringToCharAlignment(einsiString)
 	os.Stderr.WriteString(".")
 
 	if saveTempAlns == true {
@@ -124,7 +126,7 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	c := FastaToCodonAlignment(inputPath)
 
 	// Read protein sequences from Alignment of CodonSequences and create a Fasta string in buffer
-	buff := ProtAlignmentToBuffer(c)
+	buff := aln.ProtAlignmentToBuffer(c)
 
 	ginsiString := GinsiCodonAlign(mafftCmd, buff, iterations, c)
 	linsiString := LinsiCodonAlign(mafftCmd, buff, iterations, c)
@@ -145,9 +147,9 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	}
 
 	// Translate FASTA to protein then align
-	ginsiAln := StringToCodonAlignment(ginsiString)
-	linsiAln := StringToCodonAlignment(linsiString)
-	einsiAln := StringToCodonAlignment(einsiString)
+	ginsiAln := aln.StringToCodonAlignment(ginsiString)
+	linsiAln := aln.StringToCodonAlignment(linsiString)
+	einsiAln := aln.StringToCodonAlignment(einsiString)
 	os.Stderr.WriteString(".")
 
 	if saveTempAlns == true {
