@@ -69,17 +69,19 @@ func main() {
 	// The program is two modes: single file and batch mode.
 	// Because arguments are mode-dependent, the validity of arguments are checked depending whether or not -batch is empty (single file) or not (batch mode).
 	if len(*isBatchPtr) == 0 {
-		// Single file mode
+		// Single file mode expects a single positional argument (FASTA file path).
+		// Checks whether there is at least one positional argument present.
+		// Raises an error and exists if no positional arguments are present, or when more than one is given.
 		args := flag.Args()
-
-		if len(args) < 1 {
+		if len(args) == 0 {
 			os.Stderr.WriteString("Error: Missing path to FASTA file.\n")
 			os.Exit(1)
 		} else if len(args) > 1 {
 			os.Stderr.WriteString("Error: More than 1 positional argument passed.\n")
 			os.Exit(1)
 		}
-
+		// Given that there is only one positional argument supplied, checks whether a file exists at that path.
+		// This does not check whether the file is a FASTA file though.
 		if doesExist, _ := Exists(args[0]); doesExist == false {
 			os.Stderr.WriteString("Error: file does not exist.\n")
 			os.Exit(1)
