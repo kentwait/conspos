@@ -50,12 +50,12 @@ func (a Alignment) ToLower() {
 
 // ToFastaString returns the FASTA-formatted string of the sequence alignment.
 func (a Alignment) ToFastaString() string {
-	return SequenceAlignmentToString(a)
+	return ToString(a)
 }
 
 // ToFasta saves the sequence alignment to a FASTA file.
 func (a Alignment) ToFasta(path string) {
-	buff := SequenceAlignmentToBuffer(a)
+	buff := ToBuffer(a)
 	f, err := os.Create(path)
 	if err != nil {
 		panic(err)

@@ -5,16 +5,16 @@ import (
 	"fmt"
 )
 
-// SequenceAlignmentToString converts sequences in the sequene alignment into a FASTA
+// ToString converts sequences in the sequene alignment into a FASTA
 // formatted string.
-func SequenceAlignmentToString(a Alignment) string {
-	buffer := SequenceAlignmentToBuffer(a)
+func ToString(a Alignment) string {
+	buffer := ToBuffer(a)
 	return buffer.String()
 }
 
-// SequenceAlignmentToBuffer converts sequences in the sequene alignment into a buffered
+// ToBuffer converts sequences in the sequene alignment into a buffered
 // stream which can then be converted to bytes or a string.
-func SequenceAlignmentToBuffer(a Alignment) bytes.Buffer {
+func ToBuffer(a Alignment) bytes.Buffer {
 	var buffer bytes.Buffer
 	// Append each Sequence in Alignment
 	for _, s := range a {
