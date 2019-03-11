@@ -225,8 +225,11 @@ func (s *CodonSequence) SetSequence(seq string) {
 // translating each codon into its corresponding amino acid using the
 // standard genetic code respectively.
 func (s *CodonSequence) SetCodons(seq []string) {
+	// Overwrites value of .codons
 	s.codons = seq
+	// Overwrite value of .seq
 	s.seq = strings.Join(seq, "")
+	// Overwrites the value of .prot
 	s.prot = Translate(s.seq).String()
 }
 
