@@ -113,6 +113,7 @@ func main() {
 			buffer = ConsistentAlnPipeline(args[0], *gapCharPtr, *markerIDPtr, *cMarkerPtr, *icMarkerPtr, *maxIterPtr, toUpper, toLower, *saveTempAlnPtr)
 		}
 		fmt.Print(buffer.String())
+		// TODO: clear buffer after writing to stdout?
 
 	} else {
 		// Batch mode is activated when the value of -batch is not empty.
