@@ -1,38 +1,68 @@
 package sequence
 
 import (
+	"strings"
 	"testing"
 )
 
-func TestCharSequence_UngappedCoords(t *testing.T) {
-	seq := "TTT---TTCTTATTG"
-	s := CharSequence{"test", "", seq}
-	exp := []int{0, 1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14}
+func TestCodonSequence_Properties(t *testing.T) {
+	id := "a"
+	title := "test"
+	seq := "ATGGCGTGG"
+	prot := "MAW"
+	codons := []string{"ATG", "GCG", "TGG"}
+	actual := CodonSequence{CharSequence{id, title, seq}, prot, codons}
 
-	res := s.UngappedCoords("-")
-
-	for i, expValue := range exp {
-		if expValue != res[i] {
-			t.Errorf("UngappedCoords(\"-\"): expected (%d) %d, actual %d",
-				i, expValue, res[i],
-			)
-		}
+	if id != actual.ID() {
+		t.Errorf("ID: expected %#v, actual %#v", id, actual.ID())
+	}
+	if title != actual.Title() {
+		t.Errorf("Title: expected %#v, actual %#v", title, actual.Title())
+	}
+	if seq != actual.Sequence() {
+		t.Errorf("Sequence: expected %#v, actual %#v", seq, actual.Sequence())
+	}
+	if prot != actual.Prot() {
+		t.Errorf("Prot: expected %#v, actual %#v", prot, actual.Prot())
+	}
+	if strings.Join(codons, "") != strings.Join(actual.Codons(), "") {
+		t.Errorf("Codons: expected %#v, actual %#v", codons, actual.Codons())
 	}
 }
 
-func TestCharSequence_UngappedPositionSlice(t *testing.T) {
-	seq := "TTT---TTCTTATTG"
-	s := CharSequence{"test", "", seq}
-	exp := []int{0, 1, 2, -1, -1, -1, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+func TestCodonSequence_ToUpper(t *testing.T) {
+	actual := CodonSequence{CharSequence{"a", "test", "atggcgtgg"}, "maw", []string{"atg", "gcg", "tgg"}}
+	actual.ToUpper()
+	if exp := "ATGGCGTGG"; exp != actual.seq {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.seq)
+	}
+	if exp := "MAW"; exp != actual.prot {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.prot)
+	}
+	if exp := "ATGGCGTGG"; exp != strings.Join(actual.codons, "") {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.codons)
+	}
+}
+func TestCodonSequence_ToLower(t *testing.T) {
+	actual := CodonSequence{CharSequence{"a", "test", "ATGGCGTGG"}, "MAW", []string{"ATG", "GCG", "TGG"}}
+	actual.ToLower()
+	if exp := "atggcgtgg"; exp != actual.seq {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.seq)
+	}
+	if exp := "maw"; exp != actual.prot {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.prot)
+	}
+	if exp := "atggcgtgg"; exp != strings.Join(actual.codons, "") {
+		t.Errorf("ToUpper: expected %#v, actual %#v", exp, actual.codons)
+	}
+}
 
-	res := s.UngappedPositionSlice("-")
-
-	for i, expValue := range exp {
-		if expValue != res[i] {
-			t.Errorf("UngappedCoords(\"-\"): expected (%d) %d, actual %d",
-				i, expValue, res[i],
-			)
-		}
+func TestCodonSequence_Char(t *testing.T) {
+	seq := CharSequence{id: "a", title: "test", seq: "GTGGCGTAG"}
+	exp := "A"
+	actual := seq.Char(7)
+	if exp != actual {
+		t.Errorf("Char: expected %#v, actual %#v", exp, actual)
 	}
 }
 
