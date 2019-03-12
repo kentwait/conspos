@@ -44,6 +44,16 @@ func (s *CharSequence) Char(i int) string {
 	return string([]rune(s.seq)[i])
 }
 
+// SetID assigns a string to the id field of CharSequence.
+func (s *CharSequence) SetID(id string) {
+	s.id = id
+}
+
+// SetTitle assigns a string to the title field of CharSequence.
+func (s *CharSequence) SetTitle(title string) {
+	s.title = title
+}
+
 // SetSequence assigns a string to the seq field of CharSequence.
 func (s *CharSequence) SetSequence(seq string) {
 	s.seq = seq

@@ -24,6 +24,8 @@ type Getter interface {
 
 // Setter contains methods to set/modify sequence data.
 type Setter interface {
+	SetID(string)
+	SetTitle(string)
 	SetSequence(string)
 	ToUpper()
 	ToLower()
