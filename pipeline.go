@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
-	aln "github.com/kentwait/conspos/alignment"
+	fa "github.com/kentwait/gofasta"
 )
 
 // ConsistentAlignmentPositions returns the list of positions in the alignment that are considered consistent given by the alignment pattern per site across all given alignments.
@@ -148,9 +149,9 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 	*/
 	// TODO: Propagate ExecMafft error into *Align
 	// TODO: *Align should probably output a buffer instead of a string
-	ginsiString := GinsiAlign(mafftCmd, inputPath, iterations)
-	linsiString := LinsiAlign(mafftCmd, inputPath, iterations)
-	einsiString := EinsiAlign(mafftCmd, inputPath, iterations)
+	ginsiString := CharAlign(mafftCmd, inputPath, "ginsi", iterations)
+	linsiString := CharAlign(mafftCmd, inputPath, "linsi", iterations)
+	einsiString := CharAlign(mafftCmd, inputPath, "einsi", iterations)
 
 	// Check if alignments are not empty.
 	// If empty, print error message to stderr and exit with code 1
@@ -165,17 +166,17 @@ func ConsistentAlnPipeline(inputPath, gapChar, markerID, consistentMarker, incon
 	}
 
 	// Each result (string) is parsed to create character alignments
-	ginsiAln := aln.StringToCharAlignment(ginsiString)
-	linsiAln := aln.StringToCharAlignment(linsiString)
-	einsiAln := aln.StringToCharAlignment(einsiString)
+	ginsiAln := fa.FastaToAlignment(strings.NewReader(ginsiString), false)
+	linsiAln := fa.FastaToAlignment(strings.NewReader(linsiString), false)
+	einsiAln := fa.FastaToAlignment(strings.NewReader(einsiString), false)
 	os.Stderr.WriteString(".")
 
 	// Writes temp alignments if necessary
 	// TODO: ToFasta is not necessary, just write the ginsiString, linsiString, einsiString
 	if saveTempAlns == true {
-		einsiAln.ToFasta(inputPath + ".einsi.aln")
-		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
-		linsiAln.ToFasta(inputPath + ".linsi.aln")
+		einsiAln.ToFastaFile(inputPath + ".einsi.aln")
+		ginsiAln.ToFastaFile(inputPath + ".ginsi.aln")
+		linsiAln.ToFastaFile(inputPath + ".linsi.aln")
 	}
 
 	// consistentPos is a boolean slice indicating per position whether it is consistent or not.
@@ -207,17 +208,17 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	os.Stderr.WriteString(fmt.Sprintf("%s: ", inputPath))
 
 	// Create an Alignment of CodonSequence to generate translated protein sequence from nucleotide sequence
-	c := FastaToCodonAlignment(inputPath)
+	c := fa.FastaFileToCodonAlignment(inputPath)
 
 	// Read protein sequences from Alignment of CodonSequences and create a Fasta string in buffer
-	buff := aln.ProtAlignmentToBuffer(c)
+	protReader := strings.NewReader(c.ToFasta())
 
 	// Pass buff to each of the three alignment strategies.
 	// These will align protein sequences in MAFFT.
 	// Based on the protein alignment, the original codon alignment is adjusted using the AlignCodonsUsingProtAlignment function.
-	ginsiString := GinsiCodonAlign(mafftCmd, buff, iterations, c)
-	linsiString := LinsiCodonAlign(mafftCmd, buff, iterations, c)
-	einsiString := EinsiCodonAlign(mafftCmd, buff, iterations, c)
+	ginsiString := CodonAlignStdin(mafftCmd, protReader, "ginsi", iterations, c)
+	linsiString := CodonAlignStdin(mafftCmd, protReader, "linsi", iterations, c)
+	einsiString := CodonAlignStdin(mafftCmd, protReader, "einsi", iterations, c)
 
 	// Check if string alignment is not empty
 	if len(ginsiString) == 0 {
@@ -231,17 +232,17 @@ func ConsistentCodonAlnPipeline(inputPath, gapChar, markerID, consistentMarker, 
 	}
 
 	// The FASTA outputs are parsed to create codon alignments.
-	ginsiAln := aln.StringToCodonAlignment(ginsiString)
-	linsiAln := aln.StringToCodonAlignment(linsiString)
-	einsiAln := aln.StringToCodonAlignment(einsiString)
+	ginsiAln := fa.FastaToAlignment(strings.NewReader(ginsiString), true)
+	linsiAln := fa.FastaToAlignment(strings.NewReader(linsiString), true)
+	einsiAln := fa.FastaToAlignment(strings.NewReader(einsiString), true)
 	os.Stderr.WriteString(".")
 
 	// TODO: ToFasta conversion is unnecessary.
 	// *insiString is already in FASTA format
 	if saveTempAlns == true {
-		einsiAln.ToFasta(inputPath + ".einsi.aln")
-		ginsiAln.ToFasta(inputPath + ".ginsi.aln")
-		linsiAln.ToFasta(inputPath + ".linsi.aln")
+		einsiAln.ToFastaFile(inputPath + ".einsi.aln")
+		ginsiAln.ToFastaFile(inputPath + ".ginsi.aln")
+		linsiAln.ToFastaFile(inputPath + ".linsi.aln")
 	}
 
 	// consistentPos is a boolean slice indicating per position whether it is consistent or not. Length of consistentPos is the length of the codon alignment as single characters.
