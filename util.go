@@ -1,12 +1,26 @@
-package main
+package conspos
 
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"reflect"
 
 	fa "github.com/kentwait/gofasta"
 )
+
+// Exists returns whether the given file or directory Exists or not,
+// and accompanying errors.
+func Exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, err
+}
 
 // MarkedAlignmentToBuffer writes a marked multiple sequence alignment
 // in the FASTA format to the buffer.

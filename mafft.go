@@ -1,4 +1,4 @@
-package main
+package conspos
 
 import (
 	"io"
@@ -10,8 +10,6 @@ import (
 
 	fa "github.com/kentwait/gofasta"
 )
-
-// MAFFT functions for nucleotide and protein alignments
 
 // ExecMafft calls the MAFFT program with the given arguments.
 // Returns stdout as a string and nil if no errors are encountered.
@@ -53,28 +51,6 @@ func ExecMafft(mafftCmd string, args []string) (string, error) {
 	return string(stdout), nil
 }
 
-// ExecMafftStdin calls the MAFFT program with the given arguments and using standard input as input.
-// Returns stdout as a string and nil if no errors are encountered.
-// If an error occurs, returns a nil string and the error encountered.
-func ExecMafftStdin(mafftCmd string, stdin io.Reader, args []string) (string, error) {
-	// TODO: Combine with ExecMafft?
-	absPath, lookErr := exec.LookPath(mafftCmd)
-	if lookErr != nil {
-		panic(lookErr)
-	}
-	args = append(args, "-")
-
-	cmd := exec.Command(absPath, args...)
-	cmd.Stdin = stdin
-
-	stdout, err := cmd.Output()
-	if err != nil {
-		MafftError(err)
-		os.Exit(1)
-	}
-	return string(stdout), nil
-}
-
 // CharAlign calls MAFFT to align sequences depending on the specified alignment method.
 func CharAlign(mafftCmd, fastaPath string, method string, iterations int) string {
 	var methodFlag, indicatorChar string
@@ -101,34 +77,6 @@ func CharAlign(mafftCmd, fastaPath string, method string, iterations int) string
 	stdout, _ := ExecMafft(mafftCmd, args)
 	return stdout
 }
-
-// CharAlignStdin calls MAFFT to align sequences depending on the specified alignment method coming from standard input.
-func CharAlignStdin(mafftCmd string, r io.Reader, method string, iterations int) string {
-	var methodFlag, indicatorChar string
-	if method == "einsi" {
-		methodFlag = "--genafpair"
-		indicatorChar = "E"
-	} else if method == "linsi" {
-		methodFlag = "--localpair"
-		indicatorChar = "L"
-	} else if method == "ginsi" {
-		methodFlag = "--globalpair"
-		indicatorChar = "G"
-	}
-	var args []string
-	args = append(args, []string{
-		"--maxiterate",
-		strconv.Itoa(iterations),
-		methodFlag,
-		"--quiet",
-	}...)
-	// TODO: Add verbosity level to silence output
-	os.Stderr.WriteString(indicatorChar)
-	stdout, _ := ExecMafftStdin(mafftCmd, r, args)
-	return stdout
-}
-
-// MAFFT functions for codon alignemnts
 
 // CodonAlign calls MAFFT to align codon sequences depending on the specified alignment method.
 func CodonAlign(mafftCmd, method string, fastaPath string, iterations int, c fa.Alignment) string {
@@ -163,6 +111,54 @@ func CodonAlign(mafftCmd, method string, fastaPath string, iterations int, c fa.
 	os.Stderr.WriteString("C")
 
 	return newStdout
+}
+
+// ExecMafftStdin calls the MAFFT program with the given arguments and using standard input as input.
+// Returns stdout as a string and nil if no errors are encountered.
+// If an error occurs, returns a nil string and the error encountered.
+func ExecMafftStdin(mafftCmd string, stdin io.Reader, args []string) (string, error) {
+	// TODO: Combine with ExecMafft?
+	absPath, lookErr := exec.LookPath(mafftCmd)
+	if lookErr != nil {
+		panic(lookErr)
+	}
+	args = append(args, "-")
+
+	cmd := exec.Command(absPath, args...)
+	cmd.Stdin = stdin
+
+	stdout, err := cmd.Output()
+	if err != nil {
+		MafftError(err)
+		os.Exit(1)
+	}
+	return string(stdout), nil
+}
+
+// CharAlignStdin calls MAFFT to align sequences depending on the specified alignment method coming from standard input.
+func CharAlignStdin(mafftCmd string, r io.Reader, method string, iterations int) string {
+	var methodFlag, indicatorChar string
+	if method == "einsi" {
+		methodFlag = "--genafpair"
+		indicatorChar = "E"
+	} else if method == "linsi" {
+		methodFlag = "--localpair"
+		indicatorChar = "L"
+	} else if method == "ginsi" {
+		methodFlag = "--globalpair"
+		indicatorChar = "G"
+	}
+	var args []string
+	args = append(args, []string{
+		"--maxiterate",
+		strconv.Itoa(iterations),
+		methodFlag,
+		"--quiet",
+	}...)
+	// TODO: Add verbosity level to silence output
+	os.Stderr.WriteString(indicatorChar)
+	stdout, _ := ExecMafftStdin(mafftCmd, r, args)
+	return stdout
 }
 
 // CodonAlignStdin calls MAFFT to align codon sequences depending on the specified alignment method coming from standard input.
