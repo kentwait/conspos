@@ -79,8 +79,8 @@ func CodonMafftPipeline(inputFile io.Reader, mafftCmd string, iterations int, sa
 
 	// Create codon alignments based on protein alignments
 	codonGinsiAln := OffsetAlignCodons(codonSequences, protGinsiAln)
-	codonLinsiAln := OffsetAlignCodons(codonSequences, protGinsiAln)
-	codonEinsiAln := OffsetAlignCodons(codonSequences, protGinsiAln)
+	codonLinsiAln := OffsetAlignCodons(codonSequences, protLinsiAln)
+	codonEinsiAln := OffsetAlignCodons(codonSequences, protEinsiAln)
 
 	if len(saveCodonAlns) > 0 {
 		// Save codon alignments to file
