@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"reflect"
 
 	fa "github.com/kentwait/gofasta"
 )
@@ -50,25 +49,14 @@ func MarkedAlignmentToBuffer(template fa.Alignment, consistentPos []bool, marker
 	return buffer
 }
 
-// AlignCodonsUsingProtAlignment takes an unaligned set of codon sequences and an
-// aligned set of protein sequences to create a new sequence alignment
-// by using the aligned protein sequences as a guide. Outputs a buffer
-// containing a the new codon alignment as a FASTA-formatted string.
-func AlignCodonsUsingProtAlignment(c, p fa.Alignment) bytes.Buffer {
+// OffsetAlignCodons aligns codons by adding gaps to offset positions based on its aligned translated protein sequence.
+func OffsetAlignCodons(c []*fa.CodonSequence, p []*fa.CharSequence) (sequences []*fa.CodonSequence) {
 	gapRune := []rune("-")[0]
-	var newFasta bytes.Buffer
 	for i := range p {
 		newSeq := bytes.Buffer{}
-
-		if len(c[i].Description()) > 0 {
-			newFasta.WriteString(fmt.Sprintf(">%s %s\n", c[i].ID(), p[i].Description()))
-		} else {
-			newFasta.WriteString(fmt.Sprintf(">%s\n", c[i].ID()))
-		}
-
 		ucnt := 0
 		for _, char := range p[i].Sequence() {
-			seq := reflect.ValueOf(c[i]).Elem().FieldByName("sequence").String()
+			seq := c[i].Sequence()
 			cStart := ucnt * 3
 			cEnd := (ucnt + 1) * 3
 			if char == gapRune {
@@ -78,10 +66,9 @@ func AlignCodonsUsingProtAlignment(c, p fa.Alignment) bytes.Buffer {
 				ucnt++
 			}
 		}
-		newSeq.WriteString("\n")
-		newFasta.Write(newSeq.Bytes())
-
+		sequence := fa.NewCodonSequence(c[i].ID(), c[i].Description(), newSeq.String())
 		newSeq.Reset()
+		sequences = append(sequences, sequence)
 	}
-	return newFasta
+	return
 }
