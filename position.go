@@ -111,7 +111,7 @@ func ScorePositions(matrices ...[][]int) []uint {
 }
 
 // MarkConsistent returns a slice of 1-character strings denoting whether the position is consistent, always inconsistent, or sometimes inconsistent.
-func MarkConsistent(scoreSlice []uint, consScore uint, consChar, interChar, inconsChar string) (markSlice []string) {
+func MarkConsistent(scoreSlice []int, consScore int, consChar, interChar, inconsChar string) (markSlice []string) {
 	for _, score := range scoreSlice {
 		switch {
 		case score == consScore:
@@ -126,7 +126,7 @@ func MarkConsistent(scoreSlice []uint, consScore uint, consChar, interChar, inco
 }
 
 // MarkOnlyConsistent returns a slice of 1-character strings denoting whether the position is consistent or inconsistent.
-func MarkOnlyConsistent(scoreSlice []uint, consScore uint, consChar, inconsChar string) (markSlice []string) {
+func MarkOnlyConsistent(scoreSlice []int, consScore int, consChar, inconsChar string) (markSlice []string) {
 	for _, score := range scoreSlice {
 		switch {
 		case score == consScore:
@@ -134,22 +134,6 @@ func MarkOnlyConsistent(scoreSlice []uint, consScore uint, consChar, inconsChar 
 		default:
 			markSlice = append(markSlice, inconsChar)
 		}
-	}
-	return
-}
-
-// MarkConsistentCodon uses consistency scores from animo acid alignments to return a slice of 1-character strings denoting whether the position is consistent, always inconsistent, or sometimes inconsistent.
-func MarkConsistentCodon(aaScoreSlice []uint, consScore uint, consChar, interChar, inconsChar string) (markSlice []string) {
-	for _, mark := range MarkConsistent(aaScoreSlice, consScore, consChar, interChar, inconsChar) {
-		markSlice = append(markSlice, mark, mark, mark)
-	}
-	return
-}
-
-// MarkOnlyConsistentCodon uses consistency scores from animo acid alignments to return a slice of 1-character strings denoting whether the position is consistent or inconsistent.
-func MarkOnlyConsistentCodon(aaScoreSlice []uint, consScore uint, consChar, inconsChar string) (markSlice []string) {
-	for _, mark := range MarkOnlyConsistent(aaScoreSlice, consScore, consChar, inconsChar) {
-		markSlice = append(markSlice, mark, mark, mark)
 	}
 	return
 }
