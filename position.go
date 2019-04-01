@@ -6,8 +6,8 @@ import (
 )
 
 // ScorePositions takes a list of position matrices and returns the the consistency scores using the first matrix for positional reference.
-func ScorePositions(matrices ...[][]int) []uint {
-	patternMap := make(map[string]uint)
+func ScorePositions(matrices ...[][]int) []int {
+	patternMap := make(map[string]int)
 	var templatePattern []string
 	var patternBuffer bytes.Buffer
 	/*
@@ -102,7 +102,7 @@ func ScorePositions(matrices ...[][]int) []uint {
 		}
 	}
 
-	scoreSlice := make([]uint, len(matrices[0][0]))
+	scoreSlice := make([]int, len(matrices[0][0]))
 	for j, pattern := range templatePattern {
 		// For the current column, get how many times the template pattern was observed.
 		scoreSlice[j] = patternMap[pattern]
