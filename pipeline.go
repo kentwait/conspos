@@ -2,13 +2,14 @@ package conspos
 
 import (
 	"io"
+	"os"
 	"strings"
 
 	fa "github.com/kentwait/gofasta"
 )
 
 // SingleCharMafftPipeline aligns sequences using global, local and affine-local strategies in MAFFT.
-func SingleCharMafftPipeline(inputFile io.Reader, mafftCmd string, iterations int, saveAlns string) ([]*fa.CharSequence, []*fa.CharSequence, []*fa.CharSequence) {
+func SingleCharMafftPipeline(inputFile io.Reader, mafftCmd string, saveAlns string, iterations, verbosity int) ([]*fa.CharSequence, []*fa.CharSequence, []*fa.CharSequence) {
 	/* Align using 3 different strategies implemented in MAFFT
 	   - global alignment (GinsiAlign)
 	   - local alignment (LinsiAlign)
@@ -17,23 +18,49 @@ func SingleCharMafftPipeline(inputFile io.Reader, mafftCmd string, iterations in
 	   These calls run sequentially with MAFFT saturating all cores.
 	   MAFFT outputs results to stdout and these functions capture stdout to return a string.
 	*/
-	// TODO: Propagate ExecMafft error into *Align
-	// TODO: *Align should probably output a buffer instead of a string
-	ginsiString := CharAlignStdio(mafftCmd, inputFile, "ginsi", iterations)
-	linsiString := CharAlignStdio(mafftCmd, inputFile, "linsi", iterations)
-	einsiString := CharAlignStdio(mafftCmd, inputFile, "einsi", iterations)
+	var err error
 
-	// // Check if alignments are not empty.
-	// // If empty, print error message to stderr and exit with code 1
-	// if len(ginsiString) == 0 {
-	// 	EmptyAlnError("G-INSI", inputPath)
-	// }
-	// if len(linsiString) == 0 {
-	// 	EmptyAlnError("L-INSI", inputPath)
-	// }
-	// if len(einsiString) == 0 {
-	// 	EmptyAlnError("E-INSI", inputPath)
-	// }
+	// MAFFT global alignment
+	ginsiString, err := CharAlignStdio(mafftCmd, inputFile, "ginsi", iterations, verbosity)
+	if err != nil {
+		// Write error to stderr and exit
+		os.Stderr.WriteString("[ERROR] Could not perform global alignment (ginsi)\n")
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(1)
+	}
+	if len(ginsiString) == 0 {
+		// Print error message to stderr and exit with code 1
+		os.Stderr.WriteString("[ERROR] Empty global alignment (ginsi)\n")
+		os.Exit(1)
+	}
+
+	// MAFFT local alignment
+	linsiString, err := CharAlignStdio(mafftCmd, inputFile, "linsi", iterations, verbosity)
+	if err != nil {
+		// Write error to stderr and exit
+		os.Stderr.WriteString("[ERROR] Could not perform local alignment (linsi)\n")
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(1)
+	}
+	if len(linsiString) == 0 {
+		// Print error message to stderr and exit with code 1
+		os.Stderr.WriteString("[ERROR] Empty local alignment (linsi)\n")
+		os.Exit(1)
+	}
+
+	// MAFFT affine gap alignment
+	einsiString, err := CharAlignStdio(mafftCmd, inputFile, "einsi", iterations, verbosity)
+	if err != nil {
+		// Write error to stderr and exit
+		os.Stderr.WriteString("[ERROR] Could not perform affine-gap penalty alignment (einsi)\n")
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(1)
+	}
+	if len(einsiString) == 0 {
+		// Print error message to stderr and exit with code 1
+		os.Stderr.WriteString("[ERROR] Empty affine-gap penalty alignment (einsi)\n")
+		os.Exit(1)
+	}
 
 	// Each result (string) is parsed to create character alignments
 	ginsiAln := fa.FastaToCharSequences(strings.NewReader(ginsiString))
@@ -48,7 +75,7 @@ func SingleCharMafftPipeline(inputFile io.Reader, mafftCmd string, iterations in
 }
 
 // CodonMafftPipeline aligns translated protein sequences using global, local and affine-local strategies in MAFFT.
-func CodonMafftPipeline(inputFile io.Reader, mafftCmd string, iterations int, saveProtAlns, saveCodonAlns string) ([]*fa.CodonSequence, []*fa.CodonSequence, []*fa.CodonSequence) {
+func CodonMafftPipeline(inputFile io.Reader, mafftCmd string, saveProtAlns, saveCodonAlns string, iterations, verbosity int) ([]*fa.CodonSequence, []*fa.CodonSequence, []*fa.CodonSequence) {
 	// TODO: Whats happening here?
 	// Create an Alignment of CodonSequence to generate translated protein sequence from nucleotide sequence
 	codonSequences := fa.FastaToCodonSequences(inputFile)
@@ -64,18 +91,7 @@ func CodonMafftPipeline(inputFile io.Reader, mafftCmd string, iterations int, sa
 	// Pass buff to each of the three alignment strategies.
 	// These will align protein sequences in MAFFT.
 	// Based on the protein alignment, the original codon alignment is adjusted using the AlignCodonsUsingProtAlignment function.
-	protGinsiAln, protLinsiAln, protEinsiAln := SingleCharMafftPipeline(protReader, mafftCmd, iterations, saveProtAlns)
-
-	// // Check if string alignment is not empty
-	// if len(ginsiString) == 0 {
-	// 	EmptyAlnError("G-INSI", inputPath)
-	// }
-	// if len(linsiString) == 0 {
-	// 	EmptyAlnError("L-INSI", inputPath)
-	// }
-	// if len(einsiString) == 0 {
-	// 	EmptyAlnError("E-INSI", inputPath)
-	// }
+	protGinsiAln, protLinsiAln, protEinsiAln := SingleCharMafftPipeline(protReader, mafftCmd, saveProtAlns, iterations, verbosity)
 
 	// Create codon alignments based on protein alignments
 	codonGinsiAln := OffsetAlignCodons(codonSequences, protGinsiAln)
