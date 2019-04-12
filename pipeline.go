@@ -106,7 +106,7 @@ func CodonMafftPipeline(inputFile io.Reader, mafftCmd string, saveProtAlns, save
 }
 
 // ScoringPipeline compares multiple alignments and marks consistent alignment patterns.
-func ScoringPipeline(gapChar, consChar, interChar, inconsChar string, alns ...[]*fa.CharSequence) (markSlice []string) {
+func ScoringPipeline(gapChar, consChar, interChar, inconsChar string, alns ...fa.Alignment) (markSlice []string) {
 	var ungappedMatrices [][][]int
 	for _, sequences := range alns {
 		var aln fa.Alignment
